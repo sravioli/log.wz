@@ -115,7 +115,7 @@ function Log:new(tag, enabled, sinks)
   return setmetatable({
     tag = tag or "Log",
     enabled = enabled,
-    threshold = l.normalize(c.threshold or l.levels.WARN),
+    threshold = l.normalize(c.threshold) or l.levels.WARN,
     sinks = new_sinks,
   }, Log)
 end
@@ -212,7 +212,14 @@ end
 ---@field levels  Log.Levels             Level constants and normalisation.
 ---@field config  Log.ConfigModule       Configuration module.
 return setmetatable({
-  setup = cfg.setup,
+  ---Support both `log.setup(opts)` and `log:setup(opts)` call styles.
+  setup = function(self_or_overrides, overrides)
+    if overrides ~= nil then
+      cfg.setup(overrides)
+    else
+      cfg.setup(self_or_overrides)
+    end
+  end,
   sinks = require "log.sinks",
   levels = l,
   config = cfg,
