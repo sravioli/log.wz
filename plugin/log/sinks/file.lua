@@ -2,6 +2,9 @@
 
 local wezterm = require "wezterm"
 
+-- selene: allow(incorrect_standard_library_use)
+local sep = package.config:sub(1, 1)
+
 local json_mod
 
 ---@return Log.Sinks.Json? json
@@ -18,6 +21,105 @@ local function get_json_module()
   return json_mod
 end
 
+---Return a platform-appropriate directory for log files.
+---@return string
+local function default_log_dir()
+  if sep == "\\" then
+    local dir = os.getenv "LOCALAPPDATA" or os.getenv "APPDATA"
+    if dir then
+      return dir .. "\\wezterm"
+    end
+  else
+    local xdg = os.getenv "XDG_DATA_HOME"
+    if xdg then
+      return xdg .. "/wezterm"
+    end
+    local home = os.getenv "HOME"
+    if home then
+      return home .. "/.local/share/wezterm"
+    end
+  end
+  return "."
+end
+
+---Try to create a directory (and parents) if it doesn't already exist.
+---@param dir string
+local function ensure_dir(dir)
+  local handle = io.open(dir .. sep .. ".", "r")
+  if handle then
+    handle:close()
+    return
+  end
+  if sep == "\\" then
+    os.execute(('mkdir "%s" 2>nul'):format(dir))
+  else
+    os.execute(("mkdir -p '%s' 2>/dev/null"):format(dir))
+  end
+end
+
+---Normalize a path to forward-slashed lowercase for comparison.
+---@param path string
+---@return string
+local function norm(path)
+  return path:gsub("\\", "/"):lower()
+end
+
+---Check whether a path resides inside `wezterm.config_dir`.
+---Writing log files there triggers an infinite config-reload loop because
+---WezTerm watches the entire config directory for changes.
+---@param path string Destination file path.
+---@return boolean
+local function is_inside_config_dir(path)
+  local dir = wezterm.config_dir
+  if not dir then
+    return false
+  end
+  local norm_dir = norm(dir)
+  if norm_dir:sub(-1) ~= "/" then
+    norm_dir = norm_dir .. "/"
+  end
+  return norm(path):sub(1, #norm_dir) == norm_dir
+end
+
+---Extract the filename component from a path.
+---@param path string
+---@return string
+local function basename(path)
+  return path:match "([^/\\]+)$" or path
+end
+
+---Resolve a safe log-file path.
+---
+---When `path` is nil a default is chosen.  When `path` falls inside
+---`wezterm.config_dir` the file is relocated to the default log directory
+---and a warning is emitted.
+---
+---@param path? string Requested file path.
+---@return string path  Safe, resolved path.
+local function resolve_path(path)
+  local log_dir = default_log_dir()
+
+  if not path then
+    ensure_dir(log_dir)
+    return log_dir .. sep .. "log.wz.log"
+  end
+
+  if is_inside_config_dir(path) then
+    local name = basename(path)
+    local safe = log_dir .. sep .. name
+    wezterm.log_warn(
+      (
+        "[Log.File] '%s' is inside wezterm.config_dir — relocated to '%s' "
+        .. "to avoid an infinite config-reload loop"
+      ):format(path, safe)
+    )
+    ensure_dir(log_dir)
+    return safe
+  end
+
+  return path
+end
+
 ---@alias Log.Sinks.FileFormat "json"|"text"
 ---@alias Log.Sinks.FileFormatter fun(event: Log.Event): string
 
@@ -32,46 +134,19 @@ end
 local M = {}
 M.__index = M
 
----Check whether a path resides inside `wezterm.config_dir`.
----Writing log files there triggers an infinite config-reload loop because
----WezTerm watches the entire config directory for changes.
----@param path string Destination file path.
----@return boolean
-local function is_inside_config_dir(path)
-  local dir = wezterm.config_dir
-  if not dir then
-    return false
-  end
-  -- normalize separators to forward slashes for comparison
-  local norm_path = path:gsub("\\", "/"):lower()
-  local norm_dir = dir:gsub("\\", "/"):lower()
-  if norm_dir:sub(-1) ~= "/" then
-    norm_dir = norm_dir .. "/"
-  end
-  return norm_path:sub(1, #norm_dir) == norm_dir
-end
-
 ---Create a file sink that appends log events as JSON Lines.
 ---
----**Warning:** the destination path must NOT be inside `wezterm.config_dir`
----or every write will trigger a config reload loop and freeze WezTerm.
+---When `path` is omitted a default location is chosen automatically.
+---If `path` falls inside `wezterm.config_dir` it is relocated to the default
+---log directory to prevent an infinite config-reload loop.
 ---
----@param path string Destination file path.
+---@param path? string Destination file path (optional).
 ---@param opts? Log.Sinks.FileOptions
 ---@return Log.Sinks.FileSink
 function M.new(path, opts)
   opts = opts or {}
-
-  if is_inside_config_dir(path) then
-    wezterm.log_error(
-      "[Log.File] log path is inside wezterm.config_dir — this causes an "
-        .. "infinite config-reload loop. Move the file outside: "
-        .. wezterm.config_dir
-    )
-  end
-
   return setmetatable({
-    path = path,
+    path = resolve_path(path),
     format = opts.format or "json",
     formatter = opts.formatter,
   }, M)
