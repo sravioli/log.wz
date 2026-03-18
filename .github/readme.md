@@ -1,5 +1,9 @@
 # log.wz
 
+[![Tests](https://img.shields.io/github/actions/workflow/status/sravioli/log.wz/tests.yaml?label=Tests&logo=Lua)](https://github.com/sravioli/log.wz/actions?workflow=tests)
+[![Lint](https://img.shields.io/github/actions/workflow/status/sravioli/log.wz/lint.yaml?label=Lint&logo=Lua)](https://github.com/sravioli/log.wz/actions?workflow=lint)
+[![Coverage](https://img.shields.io/coverallsCoverage/github/sravioli/log.wz?label=Coverage&logo=coveralls)](https://coveralls.io/github/sravioli/log.wz)
+
 Logging library for [WezTerm](https://wezfurlong.org/wezterm/) plugins and
 configuration code.
 
