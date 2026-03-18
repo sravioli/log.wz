@@ -1,10 +1,10 @@
 local wezterm = require "wezterm"
 
 ---@class Log.Sinks
----@field wz     Log.Sink             WezTerm native logging sink.
----@field memory Log.Sinks.MemorySink In-memory log storage sink.
----@field json   Log.Sinks.Json       JSON encode/decode helpers and callable JSON sink.
----@field file   Log.Sinks.FileSink   File sink constructor for JSON or plain-text output.
+---@field wz     Log.Sink                                              WezTerm native logging sink.
+---@field json   Log.Sinks.Json                                        JSON encode/decode helpers and callable JSON sink.
+---@field memory fun(opts?: Log.Sinks.MemoryOpts): Log.Sinks.MemorySink Memory sink constructor.
+---@field file   fun(opts?: Log.Sinks.FileOpts): Log.Sinks.FileSink     File sink constructor.
 local M = {}
 
 local function no_op_sink()
@@ -27,43 +27,35 @@ local fallback_json = setmetatable({
   end,
 })
 
-local fallback_file = {
-  new = function(_, _)
-    return {
-      sink = function()
-        return no_op_sink()
-      end,
-      write = function(_)
-        return nil
-      end,
-    }
+local fallback_file = setmetatable({}, {
+  __call = function(_, _)
+    return setmetatable({
+      path = ".",
+      format = "json",
+      write = function(_, _) end,
+    }, { __call = function(_, _) end })
   end,
-}
+})
 
-local fallback_memory = {
-  new = function()
-    return {
-      sink = function()
-        return no_op_sink()
-      end,
-      write = function(_)
-        return nil
-      end,
-      clear = function()
-        return nil
-      end,
-      get_entries = function()
+local fallback_memory = setmetatable({}, {
+  __call = function(_, _)
+    return setmetatable({
+      entries = {},
+      max_entries = 0,
+      write = function(_, _) end,
+      clear = function(_) end,
+      get_entries = function(_)
         return {}
       end,
-      count = function()
+      count = function(_)
         return 0
       end,
-      to_string = function()
+      to_string = function(_)
         return ""
       end,
-    }
+    }, { __call = function(_, _) end })
   end,
-}
+})
 
 setmetatable(M, {
   __index = function(t, k)

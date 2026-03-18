@@ -120,40 +120,29 @@ end
 ---@alias Log.Sinks.FileFormat "json"|"text"
 ---@alias Log.Sinks.FileFormatter fun(event: Log.Event): string
 
----@class Log.Sinks.FileOptions
+---@class Log.Sinks.FileOpts
+---@field path? string Destination file path. Auto-resolved when omitted.
 ---@field format? Log.Sinks.FileFormat Output format. Defaults to "json".
 ---@field formatter? Log.Sinks.FileFormatter Custom formatter. When provided, it overrides `format`.
 
 ---@class Log.Sinks.FileSink
----@field path string Destination file path.
+---@field path string Resolved destination file path.
 ---@field format Log.Sinks.FileFormat Output format for written entries.
 ---@field formatter? Log.Sinks.FileFormatter Custom formatter used for serialization.
-local M = {}
-M.__index = M
+local FileSink = {}
+FileSink.__index = FileSink
 
----Create a file sink that appends log events as JSON Lines.
----
----When `path` is omitted a default location is chosen automatically.
----If `path` falls inside `wezterm.config_dir` it is relocated to the default
----log directory to prevent an infinite config-reload loop.
----
----@param path? string Destination file path (optional).
----@param opts? Log.Sinks.FileOptions
----@return Log.Sinks.FileSink
-function M.new(path, opts)
-  opts = opts or {}
-  return setmetatable({
-    path = resolve_path(path),
-    format = opts.format or "json",
-    formatter = opts.formatter,
-  }, M)
+---Dispatch to write when used as a sink function.
+---@param event Log.Event
+function FileSink:__call(event)
+  self:write(event)
 end
 
 ---Serialize an event to the configured file format.
 ---@param event Log.Event
 ---@return boolean ok
 ---@return string payload_or_err
-function M:serialize(event)
+function FileSink:serialize(event)
   if self.formatter then
     local ok_format, payload = pcall(self.formatter, event)
     if not ok_format then
@@ -186,7 +175,7 @@ end
 ---@param payload string
 ---@return boolean ok
 ---@return string? err
-function M:append(payload)
+function FileSink:append(payload)
   local handle, err = io.open(self.path, "a")
   if not handle then
     return false, err
@@ -206,8 +195,7 @@ end
 
 ---Encode and append an event as a formatted line.
 ---@param event Log.Event
----@return nil
-function M:write(event)
+function FileSink:write(event)
   local ok_serialize, payload = self:serialize(event)
   if not ok_serialize then
     wezterm.log_error(
@@ -224,12 +212,21 @@ function M:write(event)
   end
 end
 
----Return a sink function compatible with Log.
----@return Log.Sink
-function M:sink()
-  return function(event)
-    self:write(event)
-  end
-end
-
-return M
+---Create a new file sink.
+---
+---The returned instance is callable and can be passed directly to `Log:new`'s
+---sinks array. When `opts.path` is omitted a platform-appropriate default is
+---chosen. Paths inside `wezterm.config_dir` are automatically relocated.
+---
+---@param opts? Log.Sinks.FileOpts
+---@return Log.Sinks.FileSink
+return setmetatable({}, {
+  __call = function(_, opts)
+    opts = opts or {}
+    return setmetatable({
+      path = resolve_path(opts.path),
+      format = opts.format or "json",
+      formatter = opts.formatter,
+    }, FileSink)
+  end,
+})
