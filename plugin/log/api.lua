@@ -6,10 +6,21 @@
 local cfg = require "log.config" ---@class Log.ConfigModule
 
 -- selene: allow(incorrect_standard_library_use)
-local unpack = unpack or table.unpack
+local unpack = table.unpack
 local l = require "log.levels" ---@class Log.Levels
 
 local default_sink = require "log.sinks.wz"
+
+---@class Log.Event
+---@field level       integer Log severity level.
+---@field level_name  string  Human-readable name of the log level.
+---@field tag         string  Identifier of the logger instance.
+---@field message     string  Final formatted log message.
+---@field raw_message string  Original message string before formatting.
+
+---@alias Log.Sink fun(entry: Log.Event): any|nil
+
+---@alias Log.Level Log.Levels.Level|string|integer
 
 ---Convert a value into a printable string.
 ---
@@ -45,7 +56,15 @@ local function prettify_args(...)
   return unpack(args)
 end
 
+---A lightweight wrapper around WezTerm logging facilities.
+---
+---Logging is globally gated by `Log.Config.enabled`. When set to `false`, all
+---logger instances are silenced.
 ---@class Log
+---@field tag       string     Printable name prefix included in each log line.
+---@field enabled   boolean    Whether this logger instance is currently enabled.
+---@field threshold integer    Minimum level required for logs to be emitted.
+---@field sinks     Log.Sink[] List of active sinks.
 local Log = {}
 Log.__index = Log
 
@@ -60,6 +79,7 @@ Log.__index = Log
 function Log:new(tag, enabled, sinks)
   local c = cfg.get()
   sinks = sinks or {}
+  local _ = self
 
   if c.sinks.default_enabled then
     table.insert(sinks, 1, default_sink)

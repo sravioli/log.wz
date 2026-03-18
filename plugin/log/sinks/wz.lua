@@ -1,4 +1,6 @@
----@module "log.sinks.wt"
+---@module "log.sinks.wz"
+
+---@diagnostic disable: undefined-field
 
 local wz = require "wezterm" ---@class Wezterm
 local levels = require("log.levels").levels

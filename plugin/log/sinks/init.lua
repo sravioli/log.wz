@@ -1,4 +1,6 @@
 ---@class Log.Sinks
+---@field wz     Log.Sink             WezTerm native logging sink.
+---@field memory Log.Sinks.MemorySink In-memory log storage sink.
 local M = {}
 
 setmetatable(M, {

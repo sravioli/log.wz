@@ -13,7 +13,7 @@ M.names = { [0] = "DEBUG", [1] = "INFO", [2] = "WARN", [3] = "ERROR" }
 ---
 ---If a string is provided (e.g., "info"), it is uppercased and mapped to its integer value.
 ---
----@param level Log.Levels.Level Level representation to normalize.
+---@param level Log.Levels.Level|string|integer Level representation to normalize.
 ---@return integer level Normalized numeric level.
 function M.normalize(level)
   if type(level) == "string" then
