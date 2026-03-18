@@ -1,23 +1,37 @@
 ---@module "log.sinks.memory"
 
+local DEFAULT_MAX_ENTRIES = 10000
+
+---@class Log.Sinks.MemorySinkOptions
+---@field max_entries? integer Maximum stored entries. Oldest entries are discarded when the limit is reached. 0 = unlimited. Defaults to 10 000.
+
 ---@class Log.Sinks.MemorySink
+---@field max_entries integer Maximum stored entries (0 = unlimited).
 local M = {}
 M.__index = M
 
 ---Create new memory sink instance.
 ---
+---@param opts? Log.Sinks.MemorySinkOptions
 ---@return Log.Sinks.MemorySink
-function M.new()
+function M.new(opts)
+  opts = opts or {}
   return setmetatable({
     entries = {},
+    max_entries = opts.max_entries or DEFAULT_MAX_ENTRIES,
   }, M)
 end
 
 ---Store event in memory.
 ---
+---When `max_entries` is reached the oldest entry is discarded.
+---
 ---@param event Log.Event Log event to store.
 function M:write(event)
   table.insert(self.entries, event)
+  if self.max_entries > 0 and #self.entries > self.max_entries then
+    table.remove(self.entries, 1)
+  end
 end
 
 ---Remove all stored log entries.
