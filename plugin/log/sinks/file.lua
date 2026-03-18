@@ -42,14 +42,11 @@ local function default_log_dir()
   return "."
 end
 
----Try to create a directory (and parents) if it doesn't already exist.
+---Create a directory (and parents) if it doesn't already exist.
+---
+---Uses `mkdir` which is a no-op when the directory already exists.
 ---@param dir string
 local function ensure_dir(dir)
-  local handle = io.open(dir .. sep .. ".", "r")
-  if handle then
-    handle:close()
-    return
-  end
   if sep == "\\" then
     os.execute(('mkdir "%s" 2>nul'):format(dir))
   else
