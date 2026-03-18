@@ -63,7 +63,8 @@ log:setup {
 | `threshold`             | string \| number | `"WARN"` | Minimum level. Invalid values become `WARN`. |
 | `sinks.default_enabled` | boolean          | `true`   | Auto-prepend the WezTerm sink.               |
 
-Existing logger instances are **not** retroactively updated.
+Existing loggers keep their original threshold and sinks. The global
+`enabled` flag takes effect immediately.
 
 ## Logger
 
