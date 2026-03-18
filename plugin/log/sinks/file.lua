@@ -1,7 +1,22 @@
 ---@module "log.sinks.file"
 
-local json = require "log.sinks.json"
 local wezterm = require "wezterm"
+
+local json_mod
+
+---@return Log.Sinks.Json? json
+---@return string? err
+local function get_json_module()
+  if json_mod then
+    return json_mod
+  end
+  local ok, mod = pcall(require, "log.sinks.json")
+  if not ok then
+    return nil, tostring(mod)
+  end
+  json_mod = mod
+  return json_mod
+end
 
 ---@alias Log.Sinks.FileFormat "json"|"text"
 ---@alias Log.Sinks.FileFormatter fun(event: Log.Event): string
@@ -48,6 +63,11 @@ function M:serialize(event)
 
   if self.format == "text" then
     return true, ("%s [%s] %s"):format(event.datetime, event.level_name, event.message)
+  end
+
+  local json, err = get_json_module()
+  if not json then
+    return false, ("unable to load json sink: %s"):format(tostring(err))
   end
 
   local ok_encode, payload = pcall(json.encode, event)

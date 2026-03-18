@@ -1,7 +1,7 @@
 ---@module "log.sinks.json"
 
-local serde = require "wezterm.serde"
 local wezterm = require "wezterm"
+local serde = wezterm.serde
 
 ---@class Log.Sinks.Json
 local M = {}
@@ -10,6 +10,9 @@ local M = {}
 ---@param value any
 ---@return string
 function M.encode(value)
+  if not serde or not serde.json_encode then
+    error "wezterm.serde.json_encode is not available"
+  end
   return serde.json_encode(value)
 end
 
@@ -17,6 +20,9 @@ end
 ---@param payload string
 ---@return any
 function M.decode(payload)
+  if not serde or not serde.json_decode then
+    error "wezterm.serde.json_decode is not available"
+  end
   return serde.json_decode(payload)
 end
 
