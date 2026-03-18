@@ -70,7 +70,7 @@ function Log:new(tag, enabled, sinks)
     enabled = c.enabled or enabled or true,
     threshold = l.normalize(c.threshold or l.levels.WARN),
     sinks = sinks,
-  }, self)
+  }, Log)
 end
 
 ---Add sink to the sinks table.
