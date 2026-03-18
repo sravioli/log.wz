@@ -32,12 +32,44 @@ end
 local M = {}
 M.__index = M
 
+---Check whether a path resides inside `wezterm.config_dir`.
+---Writing log files there triggers an infinite config-reload loop because
+---WezTerm watches the entire config directory for changes.
+---@param path string Destination file path.
+---@return boolean
+local function is_inside_config_dir(path)
+  local dir = wezterm.config_dir
+  if not dir then
+    return false
+  end
+  -- normalize separators to forward slashes for comparison
+  local norm_path = path:gsub("\\", "/"):lower()
+  local norm_dir = dir:gsub("\\", "/"):lower()
+  if norm_dir:sub(-1) ~= "/" then
+    norm_dir = norm_dir .. "/"
+  end
+  return norm_path:sub(1, #norm_dir) == norm_dir
+end
+
 ---Create a file sink that appends log events as JSON Lines.
+---
+---**Warning:** the destination path must NOT be inside `wezterm.config_dir`
+---or every write will trigger a config reload loop and freeze WezTerm.
+---
 ---@param path string Destination file path.
 ---@param opts? Log.Sinks.FileOptions
 ---@return Log.Sinks.FileSink
 function M.new(path, opts)
   opts = opts or {}
+
+  if is_inside_config_dir(path) then
+    wezterm.log_error(
+      "[Log.File] log path is inside wezterm.config_dir — this causes an "
+        .. "infinite config-reload loop. Move the file outside: "
+        .. wezterm.config_dir
+    )
+  end
+
   return setmetatable({
     path = path,
     format = opts.format or "json",
