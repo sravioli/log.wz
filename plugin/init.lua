@@ -10,10 +10,14 @@ local function bootstrap()
   for _, p in ipairs(wezterm.plugin.list()) do
     if p.url:find("log.wz", 1, true) then
       local base = p.plugin_dir .. sep .. "plugin" .. sep
-      local path_entry = base .. "?.lua"
-      local init_entry = base .. "?" .. sep .. "init.lua"
-      if not package.path:find(path_entry, 1, true) then
-        package.path = package.path .. ";" .. path_entry .. ";" .. init_entry
+      local entries = {
+        base .. "?.lua",
+        base .. "?" .. sep .. "init.lua",
+      }
+      for _, entry in ipairs(entries) do
+        if not package.path:find(entry, 1, true) then
+          package.path = package.path .. ";" .. entry
+        end
       end
       return p
     end
