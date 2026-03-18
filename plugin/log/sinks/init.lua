@@ -6,7 +6,10 @@ setmetatable(M, {
     local modname = "log.sinks." .. k
     local ok, mod = pcall(require, modname)
     if not ok then
-      return require("log"):new("Log.Sinks"):error("Unable to load module %s", modname)
+      return require("log.api"):new("Log.Sinks"):error(
+      "Unable to load module %s",
+        modname
+      )
     end
 
     rawset(t, k, mod)
