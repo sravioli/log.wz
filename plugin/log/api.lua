@@ -61,7 +61,7 @@ end
 
 ---Build consistent timestamp fields for a log event.
 ---@return integer timestamp
----@return string datetime
+---@return string|osdate datetime
 local function make_timestamp()
   if wezterm.time and wezterm.time.now then
     local now = wezterm.time.now()
@@ -94,7 +94,7 @@ Log.__index = Log
 ---@param enabled? boolean       Enable logging status. Defaults to true.
 ---@param sinks?   Log.Sink[] List of sinks to output to.
 ---@return Log
-function Log:new(tag, enabled, sinks)
+function Log.new(tag, enabled, sinks)
   local c = cfg.get()
   local new_sinks = {}
 

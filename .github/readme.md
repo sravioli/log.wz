@@ -27,7 +27,7 @@ local log = wezterm.plugin.require("file:///" .. wezterm.config_dir .. "/plugins
 ```lua
 log:setup { threshold = "INFO" }
 
-local logger = log:new "wezterm.lua"
+local logger = log.new "wezterm.lua"
 logger:warn "Configuration loaded"
 logger:info("Window opacity = %s", 0.95)
 ```
@@ -64,7 +64,7 @@ Existing logger instances are **not** retroactively updated.
 ## Logger
 
 ```lua
-local logger = log:new(tag?, enabled?, sinks?)
+local logger = log.new(tag?, enabled?, sinks?)
 ```
 
 | Param     | Type        | Default | Notes                          |
@@ -126,7 +126,7 @@ Stateful modules return callable instances. Pass them straight into the sinks
 array.
 
 ```lua
-local logger = log:new("tag", true, {
+local logger = log.new("tag", true, {
   log.sinks.json,
   log.sinks.file { format = "text" },
 })
@@ -157,7 +157,7 @@ Callable sink. Encodes events as JSON and emits them through
 `wezterm.log_info`. Uses `wezterm.serde` internally.
 
 ```lua
-local logger = log:new("app", true, { log.sinks.json })
+local logger = log.new("app", true, { log.sinks.json })
 ```
 
 Also exposes `encode(value)`, `decode(payload)`, and `write(event)` as static
@@ -174,7 +174,7 @@ local mem = log.sinks.memory()                      -- default: 10 000 entries
 local mem = log.sinks.memory { max_entries = 500 }   -- custom cap
 local mem = log.sinks.memory { max_entries = 0 }     -- unlimited
 
-local logger = log:new("test", true, { mem })
+local logger = log.new("test", true, { mem })
 logger:info("hello %s", "world")
 
 mem:count()        -- 1
@@ -199,7 +199,7 @@ local f = log.sinks.file {                                  -- custom formatter
   end,
 }
 
-local logger = log:new("app", true, { f })
+local logger = log.new("app", true, { f })
 ```
 
 #### Options
@@ -232,7 +232,7 @@ The directory is created if it doesn't exist.
 Log to both WezTerm and a file (default sink enabled):
 
 ```lua
-local logger = log:new("wezterm.lua", true, { log.sinks.file() })
+local logger = log.new("wezterm.lua", true, { log.sinks.file() })
 logger:warn "starting up"
 ```
 
@@ -240,7 +240,7 @@ Log only to a file:
 
 ```lua
 log:setup { sinks = { default_enabled = false } }
-local logger = log:new("wezterm.lua", true, { log.sinks.file { format = "text" } })
+local logger = log.new("wezterm.lua", true, { log.sinks.file { format = "text" } })
 ```
 
 Capture in memory:
@@ -248,7 +248,7 @@ Capture in memory:
 ```lua
 log:setup { threshold = "DEBUG" }
 local mem = log.sinks.memory { max_entries = 100 }
-local logger = log:new("test", true, { mem })
+local logger = log.new("test", true, { mem })
 logger:debug "step 1"
 assert(mem:count() == 1)
 ```

@@ -1,8 +1,8 @@
 local wezterm = require "wezterm"
 
 ---@class Log.Sinks
----@field wz     Log.Sink                                              WezTerm native logging sink.
----@field json   Log.Sinks.Json                                        JSON encode/decode helpers and callable JSON sink.
+---@field wz     Log.Sink                                               WezTerm native logging sink.
+---@field json   Log.Sinks.Json                                         JSON encode/decode helpers and JSON sink.
 ---@field memory fun(opts?: Log.Sinks.MemoryOpts): Log.Sinks.MemorySink Memory sink constructor.
 ---@field file   fun(opts?: Log.Sinks.FileOpts): Log.Sinks.FileSink     File sink constructor.
 local M = {}
