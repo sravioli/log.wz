@@ -252,3 +252,8 @@ local logger = log:new("test", true, { mem })
 logger:debug "step 1"
 assert(mem:count() == 1)
 ```
+
+## License
+
+Code is licensed under the [GNU General Public License v2](LICENSE). Documentation
+is licensed under [Creative Commons Attribution-NonCommercial 4.0 International](LICENSE-DOCS).
