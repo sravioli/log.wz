@@ -33,6 +33,7 @@ jobs:
         run: |
           luarocks install busted
           luarocks install luacov
+          luarocks install luacov-coveralls
 
       - name: Run tests
         run: busted --verbose --coverage
@@ -42,6 +43,12 @@ jobs:
 
       - name: Print coverage summary
         run: tail -n 15 luacov.report.out
+
+      - name: Submit to Coveralls
+        if: success() && env.COVERALLS_REPO_TOKEN != ''
+        run: luacov-coveralls --service-name github-actions --verbose
+        env:
+          COVERALLS_REPO_TOKEN: ${{ github.token }}
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
