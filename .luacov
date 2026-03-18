@@ -1,0 +1,15 @@
+--- luacov configuration
+return {
+  statsfile = "luacov.stats.out",
+  reportfile = "luacov.report.out",
+
+  include = {
+    "plugin/",
+  },
+
+  exclude = {
+    "spec/",
+    "luacov",
+    "busted",
+  },
+}
