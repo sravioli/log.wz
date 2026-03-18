@@ -4,6 +4,7 @@
 ---`plugin/init.lua` requires this module after bootstrapping package.path.
 
 local cfg = require "log.config" ---@class Log.ConfigModule
+local wezterm = require "wezterm"
 
 -- selene: allow(incorrect_standard_library_use)
 local unpack = table.unpack
@@ -12,6 +13,8 @@ local l = require "log.levels" ---@class Log.Levels
 local default_sink = require "log.sinks.wz"
 
 ---@class Log.Event
+---@field timestamp   integer Unix timestamp in seconds.
+---@field datetime    string  Local timestamp formatted as `%Y-%m-%d %H:%M:%S%.3f`.
 ---@field level       integer Log severity level.
 ---@field level_name  string  Human-readable name of the log level.
 ---@field tag         string  Identifier of the logger instance.
@@ -33,9 +36,8 @@ local function stringify(v)
   if type(v) == "userdata" then
     return tostring(v)
   end
-  local ok, wz = pcall(require, "wezterm")
-  if ok and type(wz) == "table" and wz.to_string then
-    return wz.to_string(v)
+  if wezterm.to_string then
+    return wezterm.to_string(v)
   end
   return tostring(v)
 end
@@ -54,6 +56,20 @@ local function prettify_args(...)
     args[i] = stringify(args[i])
   end
   return unpack(args)
+end
+
+---Build consistent timestamp fields for a log event.
+---@return integer timestamp
+---@return string datetime
+local function make_timestamp()
+  if wezterm.time and wezterm.time.now then
+    local now = wezterm.time.now()
+    local timestamp = tonumber(now:format "%s") or os.time()
+    return timestamp, now:format "%Y-%m-%d %H:%M:%S%.3f"
+  end
+
+  local timestamp = os.time()
+  return timestamp, tostring(os.date("%Y-%m-%d %H:%M:%S", timestamp))
 end
 
 ---A lightweight wrapper around WezTerm logging facilities.
@@ -125,8 +141,11 @@ function Log:log(level, message, ...)
   end
 
   local msg = ("[%s] %s"):format(self.tag, message:format(prettify_args(...)))
+  local timestamp, datetime = make_timestamp()
 
   self:_emit {
+    timestamp = timestamp,
+    datetime = datetime,
     level = lvl,
     level_name = l.names[lvl],
     tag = self.tag,
