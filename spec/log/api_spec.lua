@@ -84,6 +84,18 @@ describe("log.api", function()
       local log = api.new()
       assert.are.equal(levels.levels.WARN, log.threshold)
     end)
+
+    it("creates empty sinks when sinks=nil and default disabled", function()
+      config.setup { sinks = { default_enabled = false } }
+      local log = api.new("T", true)
+      assert.are.equal(0, #log.sinks)
+    end)
+
+    it("uses numeric threshold from config", function()
+      config.setup { threshold = 1 }
+      local log = api.new()
+      assert.are.equal(levels.levels.INFO, log.threshold)
+    end)
   end)
 
   -- ──────────────────────────────
@@ -166,6 +178,55 @@ describe("log.api", function()
       log:log("ERROR", "ts test")
       assert.is_number(captured[1].timestamp)
       assert.is_string(captured[1].datetime)
+    end)
+
+    it("emits at exactly the threshold level", function()
+      config.setup { threshold = "WARN" }
+      local s = spy_sink()
+      local log = api.new("T", true, { s })
+      log:log("WARN", "at threshold")
+      assert.are.equal(1, #captured)
+      assert.are.equal(levels.levels.WARN, captured[1].level)
+    end)
+
+    it("accepts numeric level argument", function()
+      local s = spy_sink()
+      local log = api.new("T", true, { s })
+      log:log(levels.levels.ERROR, "numeric")
+      assert.are.equal(1, #captured)
+      assert.are.equal(levels.levels.ERROR, captured[1].level)
+      assert.are.equal("ERROR", captured[1].level_name)
+    end)
+
+    it("delivers same event to all sinks", function()
+      local captured_a, captured_b = {}, {}
+      local sink_a = function(e)
+        captured_a[#captured_a + 1] = e
+      end
+      local sink_b = function(e)
+        captured_b[#captured_b + 1] = e
+      end
+      local log = api.new("T", true, { sink_a, sink_b })
+      log:log("ERROR", "multi")
+      assert.are.equal(1, #captured_a)
+      assert.are.equal(1, #captured_b)
+      assert.are.equal(captured_a[1].message, captured_b[1].message)
+      assert.are.equal(captured_a[1].level, captured_b[1].level)
+    end)
+
+    it("formats message with no extra args", function()
+      local s = spy_sink()
+      local log = api.new("T", true, { s })
+      log:log("ERROR", "plain message")
+      assert.truthy(captured[1].message:find "plain message")
+    end)
+
+    it("formats message with multiple args", function()
+      local s = spy_sink()
+      local log = api.new("T", true, { s })
+      log:log("ERROR", "%s=%d (%.1f)", "x", 10, 3.5)
+      assert.truthy(captured[1].message:find "x=10")
+      assert.truthy(captured[1].message:find "3.5")
     end)
   end)
 
@@ -326,6 +387,31 @@ describe("log.api", function()
       local s = spy_sink()
       local log = api.new("T", true, { s })
       log:log("ERROR", "fallback ts")
+      assert.are.equal(1, #captured)
+      assert.is_number(captured[1].timestamp)
+      assert.is_string(captured[1].datetime)
+      wezterm_mock.time = saved
+    end)
+
+    it("falls back to os.time when tonumber returns nil", function()
+      local saved = wezterm_mock.time
+      wezterm_mock.time = {
+        now = function()
+          return setmetatable({}, {
+            __index = {
+              format = function(_, fmt)
+                if fmt == "%s" then
+                  return "not_a_number"
+                end
+                return "2025-01-01 00:00:00.000"
+              end,
+            },
+          })
+        end,
+      }
+      local s = spy_sink()
+      local log = api.new("T", true, { s })
+      log:log("ERROR", "tonumber nil")
       assert.are.equal(1, #captured)
       assert.is_number(captured[1].timestamp)
       assert.is_string(captured[1].datetime)

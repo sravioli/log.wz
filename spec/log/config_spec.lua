@@ -77,5 +77,32 @@ describe("log.config", function()
       -- sinks subtable should be unchanged
       assert.are.equal(true, config.get().sinks.default_enabled)
     end)
+
+    it("accumulates multiple sequential overrides", function()
+      config.setup { threshold = "DEBUG" }
+      config.setup { enabled = false }
+      local c = config.get()
+      assert.are.equal("DEBUG", c.threshold)
+      assert.are.equal(false, c.enabled)
+      assert.are.equal(true, c.sinks.default_enabled)
+    end)
+
+    it("overrides enabled with false then back to true", function()
+      config.setup { enabled = false }
+      assert.are.equal(false, config.get().enabled)
+      config.setup { enabled = true }
+      assert.are.equal(true, config.get().enabled)
+    end)
+
+    it("accepts empty table without error", function()
+      config.setup {}
+      assert.are.equal(true, config.get().enabled)
+    end)
+
+    it("does not replace sinks table reference", function()
+      local ref = config.get().sinks
+      config.setup { sinks = { default_enabled = false } }
+      assert.are.equal(ref, config.get().sinks)
+    end)
   end)
 end)

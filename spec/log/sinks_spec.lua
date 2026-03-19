@@ -102,6 +102,21 @@ describe("log.sinks.memory", function()
       entries[1] = nil
       assert.are.equal(1, sink:count())
     end)
+
+    it("returns empty table for empty sink", function()
+      local sink = memory()
+      local entries = sink:get_entries()
+      assert.is_table(entries)
+      assert.are.equal(0, #entries)
+    end)
+
+    it("preserves event content in copy", function()
+      local sink = memory()
+      sink:write(make_event { message = "preserve me", level_name = "ERROR" })
+      local entries = sink:get_entries()
+      assert.are.equal("preserve me", entries[1].message)
+      assert.are.equal("ERROR", entries[1].level_name)
+    end)
   end)
 
   describe("count()", function()
@@ -115,6 +130,13 @@ describe("log.sinks.memory", function()
       sink:write(make_event())
       sink:write(make_event())
       assert.are.equal(2, sink:count())
+    end)
+
+    it("returns 0 after clear", function()
+      local sink = memory()
+      sink:write(make_event())
+      sink:clear()
+      assert.are.equal(0, sink:count())
     end)
   end)
 
@@ -133,6 +155,24 @@ describe("log.sinks.memory", function()
       assert.truthy(str:find "%[WARN%] %[T%] caution")
       -- lines separated by newline
       assert.truthy(str:find "\n")
+    end)
+
+    it("returns single line without trailing newline for one entry", function()
+      local sink = memory()
+      sink:write(make_event { level_name = "INFO", message = "only" })
+      local str = sink:to_string()
+      assert.are.equal("[INFO] only", str)
+      assert.is_nil(str:find "\n")
+    end)
+  end)
+
+  describe("negative max_entries", function()
+    it("treats negative max_entries as unlimited", function()
+      local sink = memory { max_entries = -1 }
+      for i = 1, 20 do
+        sink:write(make_event { message = tostring(i) })
+      end
+      assert.are.equal(20, sink:count())
     end)
   end)
 end)
@@ -169,6 +209,22 @@ describe("log.sinks.json", function()
       assert.truthy(result:find "value")
     end)
 
+    it("encodes numbers", function()
+      local result = json.encode { count = 42 }
+      assert.truthy(result:find "42")
+    end)
+
+    it("encodes booleans", function()
+      local result = json.encode { flag = true }
+      assert.truthy(result:find "true")
+    end)
+
+    it("encodes nested tables", function()
+      local result = json.encode { a = { b = "deep" } }
+      assert.is_string(result)
+      assert.truthy(result:find "deep")
+    end)
+
     it("errors when serde is unavailable", function()
       local saved = wezterm_mock.serde
       wezterm_mock.serde = nil
@@ -178,6 +234,17 @@ describe("log.sinks.json", function()
         j.encode "test"
       end)
       wezterm_mock.serde = saved
+    end)
+
+    it("errors when serde.json_encode is nil", function()
+      local saved_encode = wezterm_mock.serde.json_encode
+      wezterm_mock.serde.json_encode = nil
+      package.loaded["log.sinks.json"] = nil
+      local j = require "log.sinks.json"
+      assert.has_error(function()
+        j.encode "test"
+      end)
+      wezterm_mock.serde.json_encode = saved_encode
     end)
   end)
 
@@ -197,6 +264,17 @@ describe("log.sinks.json", function()
       end)
       wezterm_mock.serde = saved
     end)
+
+    it("errors when serde.json_decode is nil", function()
+      local saved_decode = wezterm_mock.serde.json_decode
+      wezterm_mock.serde.json_decode = nil
+      package.loaded["log.sinks.json"] = nil
+      local j = require "log.sinks.json"
+      assert.has_error(function()
+        j.decode "{}"
+      end)
+      wezterm_mock.serde.json_decode = saved_decode
+    end)
   end)
 
   describe("write()", function()
@@ -206,6 +284,8 @@ describe("log.sinks.json", function()
       for _, call in ipairs(wezterm_mock._calls) do
         if call.fn == "log_info" then
           found = true
+          -- verify the payload contains event data
+          assert.truthy(tostring(call.args[1]):find "WARN")
         end
       end
       assert.is_true(found)
@@ -260,25 +340,34 @@ describe("log.sinks.wz", function()
   it("calls log_info for DEBUG level", function()
     wz_sink { level = 0, message = "debug msg" }
     assert.are.equal("log_info", wezterm_mock._calls[1].fn)
+    assert.are.equal("debug msg", wezterm_mock._calls[1].args[1])
   end)
 
   it("calls log_info for INFO level", function()
     wz_sink { level = 1, message = "info msg" }
     assert.are.equal("log_info", wezterm_mock._calls[1].fn)
+    assert.are.equal("info msg", wezterm_mock._calls[1].args[1])
   end)
 
   it("calls log_warn for WARN level", function()
     wz_sink { level = 2, message = "warn msg" }
     assert.are.equal("log_warn", wezterm_mock._calls[1].fn)
+    assert.are.equal("warn msg", wezterm_mock._calls[1].args[1])
   end)
 
   it("calls log_error for ERROR level", function()
     wz_sink { level = 3, message = "error msg" }
     assert.are.equal("log_error", wezterm_mock._calls[1].fn)
+    assert.are.equal("error msg", wezterm_mock._calls[1].args[1])
   end)
 
   it("does nothing for unknown level", function()
     wz_sink { level = 99, message = "unknown" }
+    assert.are.equal(0, #wezterm_mock._calls)
+  end)
+
+  it("does nothing for negative level", function()
+    wz_sink { level = -1, message = "negative" }
     assert.are.equal(0, #wezterm_mock._calls)
   end)
 end)
@@ -492,6 +581,53 @@ describe("log.sinks.file", function()
     end)
   end)
 
+  describe("append() write/close failures", function()
+    it("returns error when handle:write fails", function()
+      -- Monkey-patch io.open to return a fake handle that fails on write
+      local real_open = io.open
+      io.open = function(_, _) -- luacheck: ignore
+        return {
+          write = function()
+            return nil, "disk full"
+          end,
+          close = function()
+            return true
+          end,
+        }
+      end
+      package.loaded["log.sinks.file"] = nil
+      local fsm = require "log.sinks.file"
+      local sink = fsm { path = tmp_file "write_fail.log", format = "text" }
+      local ok, err = sink:append "test"
+      assert.is_false(ok)
+      assert.are.equal("disk full", err)
+      io.open = real_open
+      cleanup(tmp_file "write_fail.log")
+    end)
+
+    it("returns error when handle:close fails", function()
+      local real_open = io.open
+      io.open = function(_, _) -- luacheck: ignore
+        return {
+          write = function()
+            return true
+          end,
+          close = function()
+            return nil, "close failed"
+          end,
+        }
+      end
+      package.loaded["log.sinks.file"] = nil
+      local fsm = require "log.sinks.file"
+      local sink = fsm { path = tmp_file "close_fail.log", format = "text" }
+      local ok, err = sink:append "test"
+      assert.is_false(ok)
+      assert.are.equal("close failed", err)
+      io.open = real_open
+      cleanup(tmp_file "close_fail.log")
+    end)
+  end)
+
   describe("config_dir relocation", function()
     it("relocates path inside config_dir", function()
       local saved_dir = wezterm_mock.config_dir
@@ -653,6 +789,31 @@ describe("log.sinks (init)", function()
     assert.has_no.errors(function()
       unknown {}
     end)
+  end)
+
+  it("caches modules after first lazy-load", function()
+    local sinks = require "log.sinks"
+    local first = sinks.json
+    local second = sinks.json
+    assert.are.equal(first, second)
+  end)
+
+  it("logs error when module fails to load", function()
+    wezterm_mock._reset()
+    package.loaded["log.sinks"] = nil
+    package.preload["log.sinks.badmod"] = function()
+      error "oops"
+    end
+    local sinks = require "log.sinks"
+    local _ = sinks.badmod
+    local found = false
+    for _, call in ipairs(wezterm_mock._calls) do
+      if call.fn == "log_error" and tostring(call.args[1]):find "Unable to load" then
+        found = true
+      end
+    end
+    assert.is_true(found)
+    package.preload["log.sinks.badmod"] = nil
   end)
 
   -- ── Fallback sinks when real modules fail to load ──
