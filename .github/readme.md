@@ -13,6 +13,7 @@ configuration code.
 - File sink auto-resolves a safe log directory outside `config_dir`
 - Sink errors isolated with `pcall`; format-string errors caught gracefully
 - Lazy-loaded sink modules with no-op fallbacks
+- Full LuaLS type annotations for IDE autocompletion and type checking
 
 ## Installation
 
@@ -37,8 +38,9 @@ logger:info("Window opacity = %s", 0.95)
 ```
 
 `message` uses `string.format` placeholders. Non-string arguments are
-stringified automatically. Malformed format strings emit the raw message
-instead of crashing.
+stringified automatically (`userdata` via `tostring`, others via
+`wezterm.to_string` when available). Malformed format strings emit the raw
+message instead of crashing.
 
 Output is prefixed as `[tag] message`.
 
@@ -63,8 +65,14 @@ log:setup {
 | `threshold`             | string \| number | `"WARN"` | Minimum level. Invalid values become `WARN`. |
 | `sinks.default_enabled` | boolean          | `true`   | Auto-prepend the WezTerm sink.               |
 
+Only keys present in the defaults are accepted; unknown keys are silently
+ignored. The `sinks` sub-table is merged one level deep.
+
 Existing loggers keep their original threshold and sinks. The global
 `enabled` flag takes effect immediately.
+
+The current configuration can be read with `log.config.get()`. It returns a
+reference to the live config table.
 
 ## Logger
 
@@ -79,7 +87,8 @@ local logger = log.new(tag?, enabled?, sinks?)
 | `sinks`   | Log.Sink[]? | `{}`    | Shallow-copied, never mutated. |
 
 When `sinks.default_enabled` is true the WezTerm sink is prepended
-automatically.
+automatically. The logger's threshold is taken from the global config at
+creation time.
 
 ### Methods
 
@@ -92,6 +101,10 @@ automatically.
 | `logger:log(level, msg, ...)` | Arbitrary level (string or integer). |
 | `logger:add_sink(sink)`       | Append a sink after creation.        |
 
+A message is emitted only when all three conditions hold: `config.enabled` is
+true, `logger.enabled` is true, and the resolved level is at or above the
+logger's threshold.
+
 ## Levels
 
 | Name    | Value |
@@ -100,6 +113,11 @@ automatically.
 | `INFO`  | 1     |
 | `WARN`  | 2     |
 | `ERROR` | 3     |
+
+Access the enum via `log.levels.levels` and the reverse map via
+`log.levels.names`. Use `log.levels.normalize(level)` to convert a string or
+number into a numeric level (case-insensitive). Returns `nil` for unrecognised
+inputs; arbitrary numeric values pass through unchanged.
 
 Events are emitted when `event.level >= logger.threshold`. Unrecognised levels
 are silently dropped.
@@ -115,8 +133,11 @@ Every sink receives a table with these fields:
 | `level`       | integer | Numeric severity.              |
 | `level_name`  | string  | `"DEBUG"`, `"INFO"`, etc.      |
 | `tag`         | string  | Logger tag.                    |
-| `message`     | string  | Formatted message.             |
+| `message`     | string  | Formatted message with tag.    |
 | `raw_message` | string  | Message before formatting.     |
+
+Timestamps use `wezterm.time.now()` when available, falling back to
+`os.time()`.
 
 ## Sinks
 
@@ -140,7 +161,8 @@ local logger = log.new("tag", true, {
 Each sink runs inside `pcall`. A failing sink is logged to the WezTerm debug
 overlay and does not affect other sinks.
 
-If a sink module fails to load, a no-op fallback is used.
+Sink modules are lazy-loaded on first access. If a module fails to load, a
+no-op fallback is returned and an error is logged via `wezterm.log_error`.
 
 ---
 
@@ -154,19 +176,27 @@ Default sink. Forwards to WezTerm's native logging.
 | WARN        | `wezterm.log_warn`  |
 | ERROR       | `wezterm.log_error` |
 
+Unknown levels are silently ignored.
+
 ---
 
 ### `log.sinks.json`
 
 Callable sink. Encodes events as JSON and emits them through
-`wezterm.log_info`. Uses `wezterm.serde` internally.
+`wezterm.log_info`. Uses `wezterm.serde` internally. Errors if
+`wezterm.serde` is unavailable.
 
 ```lua
 local logger = log.new("app", true, { log.sinks.json })
 ```
 
-Also exposes `encode(value)`, `decode(payload)`, and `write(event)` as static
-functions.
+Also exposes utility functions:
+
+| Function                    | Description                                  |
+| --------------------------- | -------------------------------------------- |
+| `log.sinks.json.encode(v)`  | Encode a Lua value to a JSON string.         |
+| `log.sinks.json.decode(s)`  | Decode a JSON string back to a Lua value.    |
+| `log.sinks.json.write(evt)` | Encode event as JSON and log via `log_info`. |
 
 ---
 
@@ -187,6 +217,14 @@ mem:get_entries()  -- shallow copy of stored events
 mem:to_string()    -- "[INFO] [test] hello world"
 mem:clear()
 ```
+
+| Method          | Returns       | Description                             |
+| --------------- | ------------- | --------------------------------------- |
+| `write(event)`  | nil           | Store event. Evicts oldest when full.   |
+| `clear()`       | nil           | Remove all stored entries.              |
+| `get_entries()` | `Log.Event[]` | Shallow copy of stored events.          |
+| `count()`       | integer       | Number of stored entries.               |
+| `to_string()`   | string        | Entries formatted as `[LEVEL] message`. |
 
 ---
 
@@ -221,7 +259,7 @@ local logger = log.new("app", true, { f })
 | --------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | nil / omitted               | Uses platform default directory, file `log.wz.log`.                                                            |
 | Inside `wezterm.config_dir` | Relocated to the default directory with a warning. Writing inside `config_dir` causes an infinite reload loop. |
-| Anything else               | Used as-is.                                                                                                    |
+| Anything else               | Used as-is. Parent directories are **not** auto-created for explicit paths.                                    |
 
 Default directory:
 
@@ -230,7 +268,35 @@ Default directory:
 | Windows       | `%LOCALAPPDATA%\wezterm` (fallback `%APPDATA%\wezterm`)      |
 | Linux / macOS | `$XDG_DATA_HOME/wezterm` (fallback `~/.local/share/wezterm`) |
 
-The directory is created if it doesn't exist.
+The default directory is created automatically if it doesn't exist.
+
+#### Output formats
+
+**JSON** (default):
+
+```json
+{
+  "timestamp": 1234567890,
+  "datetime": "2025-01-01 00:00:00.000",
+  "level": 2,
+  "level_name": "WARN",
+  "tag": "MyTag",
+  "message": "[MyTag] Hello",
+  "raw_message": "Hello"
+}
+```
+
+**Text**:
+
+```
+2025-01-01 00:00:00.000 [WARN] [MyTag] Hello
+```
+
+| Method             | Returns            | Description                         |
+| ------------------ | ------------------ | ----------------------------------- |
+| `write(event)`     | nil                | Serialize and append event to file. |
+| `serialize(event)` | `boolean, string`  | Serialize event without writing.    |
+| `append(payload)`  | `boolean, string?` | Append raw text to the file.        |
 
 ## Examples
 
@@ -256,6 +322,18 @@ local mem = log.sinks.memory { max_entries = 100 }
 local logger = log.new("test", true, { mem })
 logger:debug "step 1"
 assert(mem:count() == 1)
+```
+
+Multiple sinks at once:
+
+```lua
+local mem = log.sinks.memory()
+local logger = log.new("app", true, {
+  log.sinks.json,
+  log.sinks.file { format = "text" },
+  mem,
+})
+logger:info("started with %s sinks", #logger.sinks)
 ```
 
 ## License
