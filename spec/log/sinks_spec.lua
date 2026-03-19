@@ -583,8 +583,11 @@ describe("log.sinks.file", function()
 
   describe("append() write/close failures", function()
     it("returns error when handle:write fails", function()
-      -- Monkey-patch io.open to return a fake handle that fails on write
+      local sink = file_sink_mod { path = tmp_file "write_fail.log", format = "text" }
       local real_open = io.open
+      finally(function()
+        io.open = real_open
+      end)
       io.open = function(_, _) -- luacheck: ignore
         return {
           write = function()
@@ -595,9 +598,6 @@ describe("log.sinks.file", function()
           end,
         }
       end
-      package.loaded["log.sinks.file"] = nil
-      local fsm = require "log.sinks.file"
-      local sink = fsm { path = tmp_file "write_fail.log", format = "text" }
       local ok, err = sink:append "test"
       assert.is_false(ok)
       assert.are.equal("disk full", err)
@@ -606,7 +606,11 @@ describe("log.sinks.file", function()
     end)
 
     it("returns error when handle:close fails", function()
+      local sink = file_sink_mod { path = tmp_file "close_fail.log", format = "text" }
       local real_open = io.open
+      finally(function()
+        io.open = real_open
+      end)
       io.open = function(_, _) -- luacheck: ignore
         return {
           write = function()
@@ -617,9 +621,6 @@ describe("log.sinks.file", function()
           end,
         }
       end
-      package.loaded["log.sinks.file"] = nil
-      local fsm = require "log.sinks.file"
-      local sink = fsm { path = tmp_file "close_fail.log", format = "text" }
       local ok, err = sink:append "test"
       assert.is_false(ok)
       assert.are.equal("close failed", err)
