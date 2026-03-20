@@ -104,5 +104,3 @@ owner = "sravioli"
 # to generate Markdown links in changelogs.
 authors = [{ signature = "Simone Fidanza", username = "sravioli" }]
 
-
-[packages]
