@@ -28,7 +28,7 @@ local default_sink = require "log.sinks.wz"
 ---Convert a value into a printable string.
 ---
 ---`userdata` values are converted using `tostring`, while all other types are
----pretty-printed using `wezterm.inspect` when available, falling back to `tostring`.
+---pretty-printed using `wezterm.to_string` when available, falling back to `tostring`.
 ---
 ---@param v any Value to stringify.
 ---@return string
