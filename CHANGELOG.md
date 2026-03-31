@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [1.0.0](https://github.com/sravioli/log.wz/compare/1af7e22d3b3bcfe4afcd3c8faad6a595335f3325..1.0.0) - 2026-03-31
+#### Bug Fixes
+- (**cocogitto**) set correct repository name - ([1af7e22](https://github.com/sravioli/log.wz/commit/1af7e22d3b3bcfe4afcd3c8faad6a595335f3325)) - sravioli
+#### Documentation
+- correct wezterm function name - ([44c4319](https://github.com/sravioli/log.wz/commit/44c4319e83a20518d90b48ec1bfae51dcd09f535)) - sravioli
+
+- - -
+
 ## [0.1.0](https://github.com/sravioli/wezterm/compare/94ee2bfdf9ee3152d226786bd3bac603c48c0028..0.1.0) - 2026-03-20
 #### Features
 - (**sink.file**) pick default path, forbid config_dir - ([24c54af](https://github.com/sravioli/wezterm/commit/24c54affac0e46c42cff2c738ae25159882d5b97)) - sravioli
