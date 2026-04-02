@@ -1,0 +1,10 @@
+{
+  "Lua.workspace.library": [
+    "${3rd}/luassert/library",
+    "${addons}/busted/module/library"
+  ],
+  "Lua.workspace.checkThirdParty": false,
+  "chat.tools.terminal.autoApprove": {
+    "luacov": true
+  }
+}
