@@ -420,8 +420,7 @@ describe("log.sinks.file", function()
     end)
 
     it("accepts text format", function()
-      local sink =
-        file_sink_mod { path = tmp_file "test_file_sink_text.log", format = "text" }
+      local sink = file_sink_mod { path = tmp_file "test_file_sink_text.log", format = "text" }
       assert.are.equal("text", sink.format)
       cleanup(sink.path)
     end)
@@ -571,9 +570,7 @@ describe("log.sinks.file", function()
       sink:write(make_event())
       local found = false
       for _, call in ipairs(wezterm_mock._calls) do
-        if
-          call.fn == "log_error" and tostring(call.args[1]):find "Failed to serialize"
-        then
+        if call.fn == "log_error" and tostring(call.args[1]):find "Failed to serialize" then
           found = true
         end
       end

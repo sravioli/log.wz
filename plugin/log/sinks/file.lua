@@ -198,17 +198,13 @@ end
 function FileSink:write(event)
   local ok_serialize, payload = self:serialize(event)
   if not ok_serialize then
-    wezterm.log_error(
-      ("[Log.File] Failed to serialize event: %s"):format(tostring(payload))
-    )
+    wezterm.log_error(("[Log.File] Failed to serialize event: %s"):format(tostring(payload)))
     return
   end
 
   local ok_append, err = self:append(payload)
   if not ok_append then
-    wezterm.log_error(
-      ("[Log.File] Failed to append to %s: %s"):format(self.path, tostring(err))
-    )
+    wezterm.log_error(("[Log.File] Failed to append to %s: %s"):format(self.path, tostring(err)))
   end
 end
 

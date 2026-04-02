@@ -62,9 +62,7 @@ setmetatable(M, {
     local modname = "log.sinks." .. k
     local ok, mod = pcall(require, modname)
     if not ok then
-      wezterm.log_error(
-        ("[Log.Sinks] Unable to load module %s: %s"):format(modname, tostring(mod))
-      )
+      wezterm.log_error(("[Log.Sinks] Unable to load module %s: %s"):format(modname, tostring(mod)))
 
       if k == "file" then
         rawset(t, k, fallback_file)
