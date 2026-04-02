@@ -1,4 +1,3 @@
---- luacov configuration
 return {
   statsfile = "luacov.stats.out",
   reportfile = "luacov.report.out",

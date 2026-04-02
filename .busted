@@ -2,7 +2,6 @@ return {
   _all = {
     coverage = true,
     lpath = "plugin/?.lua;plugin/?/init.lua;./?.lua;./?/init.lua",
-    ROOT = { "." },
   },
   default = {
     verbose = true,
