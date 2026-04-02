@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [1.0.1](https://github.com/sravioli/log.wz/compare/06f8f0cf9139f420813dbc8b283864e8dc247f0c..1.0.1) - 2026-04-02
+#### Features
+- streamline configuration files - ([06f8f0c](https://github.com/sravioli/log.wz/commit/06f8f0cf9139f420813dbc8b283864e8dc247f0c)) - sravioli
+#### Style
+- format with stylua - ([89f0986](https://github.com/sravioli/log.wz/commit/89f0986fec6c3caaa00110279974ab6232acb45e)) - sravioli
+
+- - -
+
 ## [1.0.0](https://github.com/sravioli/log.wz/compare/1af7e22d3b3bcfe4afcd3c8faad6a595335f3325..1.0.0) - 2026-03-31
 #### Bug Fixes
 - (**cocogitto**) set correct repository name - ([1af7e22](https://github.com/sravioli/log.wz/commit/1af7e22d3b3bcfe4afcd3c8faad6a595335f3325)) - sravioli
