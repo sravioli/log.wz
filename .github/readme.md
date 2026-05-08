@@ -4,16 +4,17 @@
 [![Lint](https://img.shields.io/github/actions/workflow/status/sravioli/log.wz/lint.yaml?label=Lint&logo=Lua)](https://github.com/sravioli/log.wz/actions?workflow=lint)
 [![Coverage](https://img.shields.io/coverallsCoverage/github/sravioli/log.wz?label=Coverage&logo=coveralls)](https://coveralls.io/github/sravioli/log.wz)
 
-Logging library for [WezTerm](https://wezfurlong.org/wezterm/) plugins and
+Logging for [WezTerm](https://wezfurlong.org/wezterm/) plugins and
 configuration code.
 
 - Tagged logger instances with per-instance enable/disable
 - Global threshold filtering (`DEBUG`, `INFO`, `WARN`, `ERROR`)
 - Pluggable sinks: WezTerm native, JSON, file, in-memory ring buffer
-- File sink auto-resolves a safe log directory outside `config_dir`
-- Sink errors isolated with `pcall`; format-string errors caught gracefully
+- File sink that chooses a safe log directory outside `config_dir`
+- Sink errors are isolated with `pcall`; malformed format strings do not crash
+  WezTerm
 - Lazy-loaded sink modules with no-op fallbacks
-- Full LuaLS type annotations for IDE autocompletion and type checking
+- LuaLS annotations for editor completion and type checking
 
 ## Installation
 
@@ -37,10 +38,10 @@ logger:warn "Configuration loaded"
 logger:info("Window opacity = %s", 0.95)
 ```
 
-`message` uses `string.format` placeholders. Non-string arguments are
-stringified automatically (`userdata` via `tostring`, others via
-`wezterm.to_string` when available). Malformed format strings emit the raw
-message instead of crashing.
+`message` uses `string.format` placeholders. Non-string arguments are converted
+automatically (`userdata` via `tostring`, everything else through
+`wezterm.to_string` when available). If a format string is malformed, log.wz
+emits the raw message instead of raising an error.
 
 Output is prefixed as `[tag] message`.
 
@@ -65,10 +66,10 @@ log:setup {
 | `threshold`             | string \| number | `"WARN"` | Minimum level. Invalid values become `WARN`. |
 | `sinks.default_enabled` | boolean          | `true`   | Auto-prepend the WezTerm sink.               |
 
-Only keys present in the defaults are accepted; unknown keys are silently
-ignored. The `sinks` sub-table is merged one level deep.
+Only keys present in the defaults are accepted. Unknown keys are ignored, and
+the `sinks` table is merged one level deep.
 
-Existing loggers keep their original threshold and sinks. The global
+Existing loggers keep the threshold and sinks they were created with. The global
 `enabled` flag takes effect immediately.
 
 The current configuration can be read with `log.config.get()`. It returns a
@@ -86,9 +87,8 @@ local logger = log.new(tag?, enabled?, sinks?)
 | `enabled` | boolean?    | `true`  | Per-instance toggle.           |
 | `sinks`   | Log.Sink[]? | `{}`    | Shallow-copied, never mutated. |
 
-When `sinks.default_enabled` is true the WezTerm sink is prepended
-automatically. The logger's threshold is taken from the global config at
-creation time.
+When `sinks.default_enabled` is true, log.wz prepends the WezTerm sink
+automatically. The logger reads the global threshold when it is created.
 
 ### Methods
 
@@ -101,9 +101,8 @@ creation time.
 | `logger:log(level, msg, ...)` | Arbitrary level (string or integer). |
 | `logger:add_sink(sink)`       | Append a sink after creation.        |
 
-A message is emitted only when all three conditions hold: `config.enabled` is
-true, `logger.enabled` is true, and the resolved level is at or above the
-logger's threshold.
+A message is emitted only when logging is enabled globally, the logger itself is
+enabled, and the resolved level is at or above the logger's threshold.
 
 ## Levels
 
@@ -116,11 +115,11 @@ logger's threshold.
 
 Access the enum via `log.levels.levels` and the reverse map via
 `log.levels.names`. Use `log.levels.normalize(level)` to convert a string or
-number into a numeric level (case-insensitive). Returns `nil` for unrecognised
-inputs; arbitrary numeric values pass through unchanged.
+number into a numeric level. String matching is case-insensitive. Unknown
+strings return `nil`; numeric values pass through unchanged.
 
-Events are emitted when `event.level >= logger.threshold`. Unrecognised levels
-are silently dropped.
+Events are emitted when `event.level >= logger.threshold`. Unknown levels are
+dropped.
 
 ## Event
 
@@ -136,8 +135,7 @@ Every sink receives a table with these fields:
 | `message`     | string  | Formatted message with tag.    |
 | `raw_message` | string  | Message before formatting.     |
 
-Timestamps use `wezterm.time.now()` when available, falling back to
-`os.time()`.
+Timestamps use `wezterm.time.now()` when available and fall back to `os.time()`.
 
 ## Sinks
 
@@ -158,17 +156,17 @@ local logger = log.new("tag", true, {
 })
 ```
 
-Each sink runs inside `pcall`. A failing sink is logged to the WezTerm debug
-overlay and does not affect other sinks.
+Each sink runs inside `pcall`. If one sink fails, log.wz reports the error to
+the WezTerm debug overlay and keeps writing to the other sinks.
 
-Sink modules are lazy-loaded on first access. If a module fails to load, a
-no-op fallback is returned and an error is logged via `wezterm.log_error`.
+Sink modules are loaded on first access. If a module cannot load, log.wz returns
+a no-op fallback and reports the error through `wezterm.log_error`.
 
 ---
 
 ### `log.sinks.wz`
 
-Default sink. Forwards to WezTerm's native logging.
+The default sink forwards events to WezTerm's native logging functions.
 
 | Level       | Calls               |
 | ----------- | ------------------- |
@@ -176,14 +174,14 @@ Default sink. Forwards to WezTerm's native logging.
 | WARN        | `wezterm.log_warn`  |
 | ERROR       | `wezterm.log_error` |
 
-Unknown levels are silently ignored.
+Unknown levels are ignored.
 
 ---
 
 ### `log.sinks.json`
 
-Callable sink. Encodes events as JSON and emits them through
-`wezterm.log_info`. Uses `wezterm.serde` internally. Errors if
+Callable sink. It encodes events as JSON and emits them through
+`wezterm.log_info`. It uses `wezterm.serde` internally and raises an error if
 `wezterm.serde` is unavailable.
 
 ```lua
