@@ -260,7 +260,7 @@ local logger = log.new("app", true, { f })
 | ----------- | -------------------- | -------- | ----------------------------------------- |
 | `path`      | string?              | auto     | File path. Resolved automatically if nil. |
 | `format`    | `"json"` \| `"text"` | `"json"` | Line format.                              |
-| `formatter` | `fun(event): string` | —        | Custom formatter. Overrides `format`.     |
+| `formatter` | `fun(event): string` | `nil`    | Custom formatter. Overrides `format`.     |
 
 #### Path handling
 
