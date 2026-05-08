@@ -5,8 +5,7 @@
 [![Lint](https://img.shields.io/github/actions/workflow/status/sravioli/log.wz/lint.yaml?label=Lint&logo=Lua)](https://github.com/sravioli/log.wz/actions?workflow=lint)
 [![Coverage](https://img.shields.io/coverallsCoverage/github/sravioli/log.wz?label=Coverage&logo=coveralls)](https://coveralls.io/github/sravioli/log.wz)
 
-Logging for [WezTerm](https://wezfurlong.org/wezterm/) plugins and
-configuration code.
+Logging for [WezTerm](https://wezfurlong.org/wezterm/) plugins and configs.
 
 - Tagged logger instances with per-instance enable/disable
 - Global threshold filtering (`DEBUG`, `INFO`, `WARN`, `ERROR`)
@@ -27,6 +26,17 @@ local log = wezterm.plugin.require "https://github.com/sravioli/log.wz"
 
 -- from a local checkout
 local log = wezterm.plugin.require("file:///" .. wezterm.config_dir .. "/plugins/log.wz")
+```
+
+### Type annotations
+
+Log ships LuaCATS annotations. After installing
+[wezterm-types](https://github.com/DrKJeff16/wezterm-types), annotate the import
+to get completion and type checking:
+
+```lua
+---@type Log
+local log = wezterm.plugin.require "https://github.com/sravioli/log.wz"
 ```
 
 ## Usage
@@ -337,5 +347,6 @@ logger:info("started with %s sinks", #logger.sinks)
 
 ## License
 
-Code is licensed under the [GNU General Public License v2](../LICENSE). Documentation
-is licensed under [Creative Commons Attribution-NonCommercial 4.0 International](../LICENSE-DOCS).
+Code is licensed under the [GNU General Public License v2](../LICENSE).
+Documentation is licensed under
+[Creative Commons Attribution-NonCommercial 4.0 International](../LICENSE-DOCS).
