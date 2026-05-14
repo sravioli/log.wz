@@ -1,14 +1,14 @@
 --- Minimal wezterm mock for testing outside WezTerm.
---- Loaded before any test file via `helper` or package preloading.
+--- Loaded before test files through `helper` or package preloading.
 
--- Return the existing mock if already installed (idempotent).
+-- Reuse the installed mock when another spec has already loaded it.
 if package.loaded["wezterm"] then
   return package.loaded["wezterm"]
 end
 
 local M = {}
 
--- Capture calls for assertion
+-- Keep emitted log calls available for assertions.
 M._calls = {}
 
 local function record(name)
@@ -21,7 +21,7 @@ M.log_info = record "log_info"
 M.log_warn = record "log_warn"
 M.log_error = record "log_error"
 
--- wezterm.to_string – use tostring fallback
+-- wezterm.to_string fallback.
 function M.to_string(v)
   return tostring(v)
 end
@@ -51,8 +51,7 @@ M.serde = {
     return tostring(value)
   end,
   json_decode = function(_)
-    -- Intentionally minimal: not used in hot paths during tests.
-    -- You can extend if needed.
+    -- Minimal by design: tests only need encode coverage here.
     return {}
   end,
 }
@@ -74,8 +73,8 @@ M.time = {
   end,
 }
 
--- wezterm.config_dir stub — deliberately NOT a temp dir, so
--- that file-sink tests writing to %TEMP% are not relocated.
+-- wezterm.config_dir is not a temp dir, so file-sink tests that write to
+-- %TEMP% keep using their explicit paths.
 -- selene: allow(incorrect_standard_library_use)
 local sep = package.config:sub(1, 1)
 M.config_dir = sep == "\\" and "C:\\wezterm_mock_config_dir" or "/wezterm_mock_config_dir"
@@ -87,12 +86,12 @@ M.plugin = {
   end,
 }
 
--- Reset captured calls
+-- Reset captured calls.
 function M._reset()
   M._calls = {}
 end
 
--- Install the mock into package.loaded so require("wezterm") returns this.
+-- Install the mock so require("wezterm") returns this table.
 package.loaded["wezterm"] = M
 
 return M
