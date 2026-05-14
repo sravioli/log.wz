@@ -98,7 +98,7 @@ describe("log.sinks.memory", function()
       sink:write(make_event { message = "a" })
       local entries = sink:get_entries()
       assert.are.equal(1, #entries)
-      -- mutating the copy should not affect the sink
+      -- Mutating the copy does not affect the sink.
       entries[1] = nil
       assert.are.equal(1, sink:count())
     end)
@@ -634,7 +634,7 @@ describe("log.sinks.file", function()
       local fsm = require "log.sinks.file"
       local inside_path = wezterm_mock.config_dir .. package.config:sub(1, 1) .. "my.log"
       local sink = fsm { path = inside_path }
-      -- Should NOT be inside config dir anymore
+      -- The resolved path must no longer be inside config_dir.
       local norm_cfg = wezterm_mock.config_dir:gsub("\\", "/"):lower()
       if norm_cfg:sub(-1) ~= "/" then
         norm_cfg = norm_cfg .. "/"
@@ -651,7 +651,7 @@ describe("log.sinks.file", function()
       local fsm = require "log.sinks.file"
       local path = tmp_file "noconfig.log"
       local sink = fsm { path = path }
-      -- Path should be unchanged since config_dir is nil
+      -- The path stays unchanged because config_dir is nil.
       assert.are.equal(path, sink.path)
       wezterm_mock.config_dir = saved_dir
       cleanup(path)
@@ -706,7 +706,7 @@ describe("log.sinks.file", function()
       -- First serialize loads json module
       local ok1, _ = sink:serialize(make_event())
       assert.is_true(ok1)
-      -- Second serialize should hit cache
+      -- The second serialize call hits the cache.
       local ok2, _ = sink:serialize(make_event())
       assert.is_true(ok2)
       cleanup(sink.path)
@@ -781,9 +781,9 @@ describe("log.sinks (init)", function()
   it("returns fallback for unknown sink module", function()
     local sinks = require "log.sinks"
     local unknown = sinks.nonexistent
-    -- Should be a no-op function from the fallback
+    -- Fallback returns a no-op function.
     assert.is_function(unknown)
-    -- Calling it should not error
+    -- Calling it does not error.
     assert.has_no.errors(function()
       unknown {}
     end)
@@ -849,7 +849,7 @@ describe("log.sinks (init)", function()
       assert.is_table(instance)
       assert.are.equal(".", instance.path)
       assert.are.equal("json", instance.format)
-      -- write and __call should not error
+      -- write and __call do not error.
       instance:write {}
       instance {}
       unpoison_module "log.sinks.file"

@@ -1,7 +1,7 @@
 ---@module "log.config"
 
 ---@class Log.Config
----@field enabled          boolean Whether logging is globally enabled.
+---@field enabled          boolean Whether logging is enabled globally.
 ---@field threshold        string|integer  Minimum log level.
 ---@field sinks            Log.Config.Sinks Sink-related settings.
 
@@ -18,7 +18,7 @@ local _config = {
 ---@class Log.ConfigModule
 local M = {}
 
----Return the current configuration (read-only reference).
+---Return the current configuration as a read-only reference.
 ---
 ---@return Log.Config
 function M.get()
@@ -28,7 +28,7 @@ end
 ---Override configuration values.
 ---
 ---Only keys present in the defaults are accepted; unknown keys are silently
----ignored.  The `sinks` sub-table is merged one level deep.
+---ignored. The `sinks` sub-table is merged one level deep.
 ---
 ---@param overrides? table Partial config to merge.
 function M.setup(overrides)

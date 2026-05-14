@@ -74,7 +74,7 @@ describe("log.config", function()
 
     it("handles sinks as non-table gracefully", function()
       config.setup { sinks = "invalid" }
-      -- sinks subtable should be unchanged
+      -- The sinks subtable stays unchanged.
       assert.are.equal(true, config.get().sinks.default_enabled)
     end)
 

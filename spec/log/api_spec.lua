@@ -53,7 +53,7 @@ describe("log.api", function()
       local s = spy_sink()
       local original = { s }
       local log = api.new("T", true, original)
-      -- adding a sink on the logger shouldn't touch the original table
+      -- Adding a sink on the logger does not touch the original table.
       log:add_sink(function() end)
       assert.are.equal(1, #original)
     end)
@@ -167,7 +167,7 @@ describe("log.api", function()
       local s = spy_sink()
       local log = api.new("T", true, { s })
       log:log("ERROR", "bad %d format", "not_a_number")
-      -- should still emit with the raw message text
+      -- The logger still emits the raw message text.
       assert.are.equal(1, #captured)
       assert.truthy(captured[1].message:find "bad")
     end)
