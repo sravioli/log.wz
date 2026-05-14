@@ -2,6 +2,23 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [1.0.2](https://github.com/sravioli/log.wz/compare/06f8f0cf9139f420813dbc8b283864e8dc247f0c..1.0.2) - 2026-05-14
+#### Features
+- streamline configuration files - ([06f8f0c](https://github.com/sravioli/log.wz/commit/06f8f0cf9139f420813dbc8b283864e8dc247f0c)) - sravioli
+#### Documentation
+- (**github**) add pull request templates - ([663e246](https://github.com/sravioli/log.wz/commit/663e2466d7345d05e1a6a10d14457144f83daf78)) - sravioli
+- (**github**) polish issue templates - ([820cbc4](https://github.com/sravioli/log.wz/commit/820cbc4758eef74c3c5848241408eeb18175cd52)) - sravioli
+- (**lua**) polish comment wording - ([dec09d4](https://github.com/sravioli/log.wz/commit/dec09d4ce4c03f5cb34179869f7f15f4d4ceb431)) - sravioli
+- (**lua**) polish comment wording - ([09c7785](https://github.com/sravioli/log.wz/commit/09c7785c45b22233aac3ef0f0ac2001f6eeff1be)) - sravioli
+- (**readme**) clarify formatter default - ([de30e3b](https://github.com/sravioli/log.wz/commit/de30e3bfc595ad741688f0db74917caef4169f13)) - sravioli
+- (**readme**) improve readme consistency - ([0facd99](https://github.com/sravioli/log.wz/commit/0facd996e3480c86715a7800ab60a9ccbe39d486)) - sravioli
+- (**readme**) add awesome-wezterm badge - ([a5e2fce](https://github.com/sravioli/log.wz/commit/a5e2fceef2adc09e13bf65d7414ff5574e12edeb)) - sravioli
+- (**readme**) improve readme clarity - ([4733523](https://github.com/sravioli/log.wz/commit/473352336a2cf703471d8fbc6045d339dbd5422a)) - sravioli
+#### Style
+- format with stylua - ([89f0986](https://github.com/sravioli/log.wz/commit/89f0986fec6c3caaa00110279974ab6232acb45e)) - sravioli
+
+- - -
+
 ## [1.0.1](https://github.com/sravioli/log.wz/compare/06f8f0cf9139f420813dbc8b283864e8dc247f0c..1.0.1) - 2026-04-02
 #### Features
 - streamline configuration files - ([06f8f0c](https://github.com/sravioli/log.wz/commit/06f8f0cf9139f420813dbc8b283864e8dc247f0c)) - sravioli
