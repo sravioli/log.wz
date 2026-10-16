@@ -139,14 +139,16 @@ Every sink receives a table with these fields:
 | Field         | Type    | Description                    |
 | ------------- | ------- | ------------------------------ |
 | `timestamp`   | integer | Unix epoch seconds.            |
-| `datetime`    | string  | `%Y-%m-%d %H:%M:%S%.3f` local. |
+| `datetime`    | string  | Local date/time; milliseconds depend on the clock API. |
 | `level`       | integer | Numeric severity.              |
 | `level_name`  | string  | `"DEBUG"`, `"INFO"`, etc.      |
 | `tag`         | string  | Logger tag.                    |
 | `message`     | string  | Formatted message with tag.    |
 | `raw_message` | string  | Message before formatting.     |
 
-Timestamps use `wezterm.time.now()` when available and fall back to `os.time()`.
+Timestamps use `wezterm.time.now()` when available and include milliseconds.
+Otherwise, `os.time()` is used and `datetime` has the format
+`%Y-%m-%d %H:%M:%S` without milliseconds.
 
 ## Sinks
 
