@@ -42,16 +42,26 @@ local function default_log_dir()
   return "."
 end
 
----Create a directory (and parents) if it doesn't already exist.
----
----Uses `mkdir` which is a no-op when the directory already exists.
+---Create a directory and its parents with an argv list (never a shell
+---string). On Windows `mkdir` is a `cmd.exe` builtin, so paths holding cmd
+---metacharacters are refused.
 ---@param dir string
-local function ensure_dir(dir)
-  if sep == "\\" then
-    os.execute(('mkdir "%s" 2>nul'):format(dir))
-  else
-    os.execute(("mkdir -p '%s' 2>/dev/null"):format(dir))
+---@return boolean ok
+local function make_dir(dir)
+  if type(wezterm.run_child_process) ~= "function" then
+    return false
   end
+  local argv
+  if sep == "\\" then
+    if dir:find '[%%&|<>^"!%c]' then
+      return false
+    end
+    argv = { "cmd.exe", "/d", "/c", "mkdir", dir }
+  else
+    argv = { "mkdir", "-p", "--", dir }
+  end
+  local ok, success = pcall(wezterm.run_child_process, argv)
+  return ok and success == true
 end
 
 ---Normalize a path to forward-slashed lowercase for comparison.
@@ -97,7 +107,6 @@ local function resolve_path(path)
   local log_dir = default_log_dir()
 
   if not path then
-    ensure_dir(log_dir)
     return log_dir .. sep .. "log.wz.log"
   end
 
@@ -110,7 +119,6 @@ local function resolve_path(path)
         .. "to avoid an infinite config-reload loop"
       ):format(path, safe)
     )
-    ensure_dir(log_dir)
     return safe
   end
 
@@ -177,6 +185,15 @@ end
 ---@return string? err
 function FileSink:append(payload)
   local handle, err = io.open(self.path, "a")
+  -- Create the parent directory lazily, once, so a missing directory costs
+  -- one child process instead of one per event.
+  if not handle and not self._dir_tried then
+    self._dir_tried = true
+    local dir = self.path:match "^(.+)[/\\][^/\\]*$"
+    if dir and make_dir(dir) then
+      handle, err = io.open(self.path, "a")
+    end
+  end
   if not handle then
     return false, err
   end
