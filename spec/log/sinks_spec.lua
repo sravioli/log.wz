@@ -519,6 +519,35 @@ describe("log.sinks.file", function()
       cleanup(path)
     end)
 
+    it("creates a missing parent directory once, via argv", function()
+      if package.config:sub(1, 1) ~= "/" then
+        return
+      end
+      local dir = tmp_file "log wz o'brien"
+      local path = dir .. "/nested/app.log"
+      local calls = {}
+      wezterm_mock.run_child_process = function(argv)
+        calls[#calls + 1] = argv
+        local p = io.popen("mkdir -p -- '" .. argv[4]:gsub("'", "'\\''") .. "' && echo ok")
+        local ok = p:read "*a"
+        p:close()
+        return ok:find "ok" ~= nil, "", ""
+      end
+      local sink = file_sink_mod { path = path, format = "text" }
+      assert.is_true(sink:append "line 1")
+      assert.is_true(sink:append "line 2")
+      assert.are.equal(1, #calls)
+      assert.are.same({ "mkdir", "-p", "--", dir .. "/nested" }, calls[1])
+      local f = assert(io.open(path, "r"))
+      local content = f:read "*a"
+      f:close()
+      assert.truthy(content:find "line 2")
+      os.remove(path)
+      os.remove(dir .. "/nested")
+      os.remove(dir)
+      wezterm_mock.run_child_process = nil
+    end)
+
     it("appends multiple payloads", function()
       local path = tmp_file "append_multi.log"
       cleanup(path)
