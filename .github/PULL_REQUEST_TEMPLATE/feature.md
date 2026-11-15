@@ -43,7 +43,7 @@ feature.
 - [ ] Existing sink configuration remains compatible.
 - [ ] Required checks pass:
   - [ ] `busted --verbose`
-  - [ ] `luacheck .`
-  - [ ] `stylua --check .`
-  - [ ] `selene --display-style=quiet .`
+  - [ ] `luacheck plugin spec`
+  - [ ] `stylua --check plugin spec`
+  - [ ] `selene --display-style=quiet plugin`
 
