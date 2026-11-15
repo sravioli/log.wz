@@ -52,9 +52,9 @@ You need:
 3. To test the plugin locally, point your WezTerm config at the checkout:
 
    ```lua
-   local log = wezterm.plugin.require(
-     "file:///" .. wezterm.config_dir .. "/plugins/log.wz"
-   )
+   local root = wezterm.home_dir .. "/path/to/log.wz/plugin/"
+   package.path = root .. "?.lua;" .. root .. "?/init.lua;" .. package.path
+   local log = require "log.api"
    ```
 
 4. Run the checks to confirm the setup works:
