@@ -2,6 +2,20 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [1.0.3](https://github.com/sravioli/log.wz/compare/189ba959f0c81c9e7f285be68717b22d3301ea33..1.0.3) - 2026-11-15
+#### Bug Fixes
+- (**file**) create log dir lazily without a shell - ([ed3e065](https://github.com/sravioli/log.wz/commit/ed3e065b44eb5c7a64de902a506b79b849c3e3e4)) - sravioli
+#### Performance Improvements
+- (**bootstrap**) keep plugin list across reloads - ([d43dac0](https://github.com/sravioli/log.wz/commit/d43dac05746706ae8410456d406fdf4ec52b8cc4)) - sravioli
+- (**bootstrap**) share plugin discovery snapshot - ([189ba95](https://github.com/sravioli/log.wz/commit/189ba959f0c81c9e7f285be68717b22d3301ea33)) - sravioli
+#### Documentation
+- (**readme**) update plugin READMEs - ([fe1a9d8](https://github.com/sravioli/log.wz/commit/fe1a9d85dfbc7375f150af4181d16f40629f350d)) - sravioli
+- clarify log timestamp precision - ([5542151](https://github.com/sravioli/log.wz/commit/55421514f31c757aa1aaa5cd8f7a919c0b5e0ab8)) - sravioli
+#### Tests
+- (**file**) cover lazy log directory creation - ([3532669](https://github.com/sravioli/log.wz/commit/353266918714b3f9928dd9663c066071cd4888e8)) - sravioli
+
+- - -
+
 ## [1.0.2](https://github.com/sravioli/log.wz/compare/06f8f0cf9139f420813dbc8b283864e8dc247f0c..1.0.2) - 2026-05-14
 #### Features
 - streamline configuration files - ([06f8f0c](https://github.com/sravioli/log.wz/commit/06f8f0cf9139f420813dbc8b283864e8dc247f0c)) - sravioli
