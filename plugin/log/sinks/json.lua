@@ -3,6 +3,8 @@
 local wezterm = require "wezterm"
 local serde = wezterm.serde
 
+---JSON encode/decode helpers and the JSON sink. Calling the module itself,
+---`log.sinks.json(event)`, is the same as `write(event)`.
 ---@class Log.Sinks.Json
 local M = {}
 

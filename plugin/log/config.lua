@@ -27,7 +27,7 @@ end
 
 ---Override configuration values.
 ---
----Only keys present in the defaults are accepted; unknown keys are silently
+---Only keys present in the defaults are accepted. Unknown keys are silently
 ---ignored. The `sinks` sub-table is merged one level deep.
 ---
 ---@param overrides? table Partial config to merge.

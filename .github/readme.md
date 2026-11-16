@@ -9,8 +9,9 @@
 
 Tagged logging with configurable output sinks for [WezTerm](https://wezterm.org/).
 
-Give each plugin or config module its own logger, filter messages by severity,
-and send the same event to the debug overlay, a file, or an in-memory buffer.
+Give each plugin or config module its own logger, and filter messages by
+severity. Send the same event to the debug overlay, a file, or a buffer in
+memory.
 One failing sink does not stop the others.
 
 [Quick start](#quick-start) · [Usage](#usage) · [Configuration](#configuration) · [API reference](#api-reference) · [Troubleshooting](#troubleshooting) · [Development](#development) · [License](#license)
@@ -98,21 +99,21 @@ log.setup {
 
 ### Options
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `enabled` | `boolean` | `true` | Global switch, checked on every message. |
-| `threshold` | `string\|integer` | `"WARN"` | Case-insensitive `DEBUG`, `INFO`, `WARN`, `ERROR`, or a numeric threshold. An unrecognized value falls back to `WARN` for new loggers. |
-| `sinks.default_enabled` | `boolean` | `true` | Prepend the native WezTerm sink when constructing a logger. |
+| Option                  | Type              | Default  | Description                                                                                                                            |
+| ----------------------- | ----------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`               | `boolean`         | `true`   | Global switch, checked on every message.                                                                                               |
+| `threshold`             | `string\|integer` | `"WARN"` | Case-insensitive `DEBUG`, `INFO`, `WARN`, `ERROR`, or a numeric threshold. An unrecognized value falls back to `WARN` for new loggers. |
+| `sinks.default_enabled` | `boolean`         | `true`   | Prepend the native WezTerm sink when constructing a logger.                                                                            |
 
 #### File sink options
 
 Pass these to `log.sinks.file(opts)`, not `log.setup`.
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `path` | `string?` | `nil` | Computed destination: `log.wz.log` in the platform data directory when omitted. |
-| `format` | `"json"\|"text"` | `"json"` | One JSON object or one formatted text line per event. Other values use the JSON branch. |
-| `formatter` | `fun(event: Log.Event): string` | `nil` | Custom serializer; takes precedence over `format`. |
+| Option      | Type                            | Default  | Description                                                                             |
+| ----------- | ------------------------------- | -------- | --------------------------------------------------------------------------------------- |
+| `path`      | `string?`                       | `nil`    | Computed destination: `log.wz.log` in the platform data directory when omitted.         |
+| `format`    | `"json"\|"text"`                | `"json"` | One JSON object or one formatted text line per event. Other values use the JSON branch. |
+| `formatter` | `fun(event: Log.Event): string` | `nil`    | Custom serializer. Takes precedence over `format`.                                      |
 
 On Windows the directory is `%LOCALAPPDATA%\wezterm`, falling back to
 `%APPDATA%\wezterm`. On other platforms it is `$XDG_DATA_HOME/wezterm`,
@@ -122,13 +123,13 @@ Check the returned sink's `path` to see where it will write.
 
 #### Memory sink options
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `max_entries` | `integer` | `10000` | Retained events; oldest entries are removed at capacity. `0` disables the limit. |
+| Option        | Type      | Default | Description                                                                      |
+| ------------- | --------- | ------- | -------------------------------------------------------------------------------- |
+| `max_entries` | `integer` | `10000` | Retained events. Oldest entries are removed at capacity. `0` disables the limit. |
 
 ### Behavior and precedence
 
-`log.setup(opts)` and `log:setup(opts)` both work; `log.config.setup(opts)`
+`log.setup(opts)` and `log:setup(opts)` both work. `log.config.setup(opts)`
 uses the same configuration. Only known settings are accepted. Updates merge
 the `sinks` map one level deep, retain omitted values, and ignore unknown keys
 without a diagnostic. There is no general option-type validation.
@@ -139,67 +140,47 @@ flag takes effect immediately. Each logger also exposes writable `enabled`,
 sink list, but the sink instances remain shared.
 
 Configuration, loggers, and memory buffers live only in Lua state. Reapply
-setup after a config reload; files you wrote remain on disk.
+setup after a config reload. Files you wrote remain on disk.
 
 ## API reference
+
+The [API reference](../docs/api.md) lists every function, method, and value
+with its parameters and return values. It is generated from the LuaLS
+annotations in `plugin/`, so it matches the code. It has these sections:
+
+- [log](../docs/api.md#log)
+- [log.sinks](../docs/api.md#logsinks)
+- [log.levels](../docs/api.md#loglevels)
+- [log.config](../docs/api.md#logconfig)
+- [Log](../docs/api.md#log)
+- [Log.Sinks.FileSink](../docs/api.md#logsinksfilesink)
+- [Log.Sinks.Json](../docs/api.md#logsinksjson)
+- [Log.Sinks.MemorySink](../docs/api.md#logsinksmemorysink)
+- [Types](../docs/api.md#types)
 
 `?` marks an optional argument or nullable return. `nil` means no returned
 value where a function is used only for its side effect.
 
 ### Loggers and configuration
 
-| Signature → Return type | Description |
-| --- | --- |
-| `log.setup(options?) → nil` | Merge global settings; also callable as `log:setup(options)`. |
-| `log.config.setup(options?) → nil` | Configure the same global settings. |
-| `log.config.get() → Log.Config` | Return the live configuration table, not a defensive copy. |
-| `log.new(tag?, enabled?, sinks?) → Log` | Create a logger; tag defaults to `"Log"`, enabled to `true`, supplied sinks to `{}`. |
-| `logger:log(level, message, ...) → nil` | Emit at a string or numeric level when it meets the threshold. Unknown levels are dropped. |
-| `logger:debug(message, ...) → nil` | Emit at `DEBUG`, prefixing the format string with `"DEBUG: "`. |
-| `logger:info(message, ...) → nil` | Emit at `INFO`. |
-| `logger:warn(message, ...) → nil` | Emit at `WARN`. |
-| `logger:error(message, ...) → nil` | Emit at `ERROR`. |
-| `logger:add_sink(sink) → nil` | Append a function or callable sink instance. |
-| `log.levels.normalize(level) → integer?` | Normalize known strings case-insensitively; numbers pass through unchanged. |
-
-Messages use `string.format`. Arguments are stringified before formatting;
-use `%s` for objects. If formatting fails, Log emits the original message
+Messages use `string.format`. Arguments are stringified before formatting.
+Use `%s` for objects. If formatting fails, Log emits the original message
 instead of raising. It reports sink exceptions through `wezterm.log_error`.
-The timestamp includes milliseconds when WezTerm's clock supports them;
-the `os.time` fallback has second precision.
+The timestamp includes milliseconds when WezTerm's clock supports them.
+The `os.time` fallback has second precision.
 
-| Constant | Value | Meaning |
-| --- | --- | --- |
-| `log.levels.levels.DEBUG` | `0` | Diagnostic messages. |
-| `log.levels.levels.INFO` | `1` | Informational messages. |
-| `log.levels.levels.WARN` | `2` | Warnings; default threshold. |
-| `log.levels.levels.ERROR` | `3` | Errors. |
-| `log.levels.names` | `{ [0] = "DEBUG", [1] = "INFO", [2] = "WARN", [3] = "ERROR" }` | Reverse lookup. |
+| Constant                  | Value                                                          | Meaning                      |
+| ------------------------- | -------------------------------------------------------------- | ---------------------------- |
+| `log.levels.levels.DEBUG` | `0`                                                            | Diagnostic messages.         |
+| `log.levels.levels.INFO`  | `1`                                                            | Informational messages.      |
+| `log.levels.levels.WARN`  | `2`                                                            | Warnings. Default threshold. |
+| `log.levels.levels.ERROR` | `3`                                                            | Errors.                      |
+| `log.levels.names`        | `{ [0] = "DEBUG", [1] = "INFO", [2] = "WARN", [3] = "ERROR" }` | Reverse lookup.              |
 
 ### Sink factories and operations
 
-| Signature → Return type | Description |
-| --- | --- |
-| `log.sinks.wz(event) → nil` | Native sink: debug/info to `log_info`, warn to `log_warn`, error to `log_error`. |
-| `log.sinks.json(event) → nil` | Callable alias of `log.sinks.json.write`. |
-| `log.sinks.json.write(event) → nil` | Encode and emit JSON through `wezterm.log_info`; encoding failures are logged. |
-| `log.sinks.json.encode(value) → string` | JSON-encode a value; missing serde support or invalid input raises. |
-| `log.sinks.json.decode(payload) → any` | JSON-decode text; missing serde support or invalid JSON raises. |
-| `log.sinks.file(options?) → Log.Sinks.FileSink` | Construct a callable file sink; see [options](#file-sink-options). |
-| `file(event) → nil` | Callable alias of `file:write(event)`. |
-| `file:write(event) → nil` | Serialize and append one line; failures are logged. |
-| `file:serialize(event) → boolean, string` | Return success and payload, or `false` and an error message; does not write. |
-| `file:append(payload) → boolean, string?` | Append raw text plus a newline; return an error on open/write/close failure. |
-| `log.sinks.memory(options?) → Log.Sinks.MemorySink` | Construct a callable memory buffer; see [options](#memory-sink-options). |
-| `memory(event) → nil` | Callable alias of `memory:write(event)`. |
-| `memory:write(event) → nil` | Store the same event reference; evict the oldest entry at capacity. |
-| `memory:clear() → nil` | Remove stored events. |
-| `memory:get_entries() → Log.Event[]` | Shallow-copy the list; event tables remain shared. |
-| `memory:count() → integer` | Count retained events. |
-| `memory:to_string() → string` | Join events as `[LEVEL] message` lines. |
-
 Sink modules load on first access. If a module fails to load, Log reports the
-error and caches a no-op fallback. Empty output does not confirm a successful
+error and caches a no-op fallback. Empty output does not prove a successful
 write. See the [annotated source](../plugin/log/api.lua) for full event and sink types.
 
 ## Troubleshooting
@@ -246,7 +227,7 @@ include the module and sink APIs:
 local log = wezterm.plugin.require "https://github.com/sravioli/log.wz"
 ```
 
-Use `Log.API` for the module; `Log` describes a logger instance.
+Use `Log.API` for the module. `Log` describes a logger instance.
 The [source annotations](../plugin/log/api.lua) describe the API in this revision.
 
 ### Checks and contributions
@@ -260,12 +241,11 @@ selene --display-style=quiet plugin
 stylua --check plugin spec
 ```
 
-Specs use a WezTerm mock; verify GUI logging and file output in WezTerm too.
+Specs use a WezTerm mock. Check GUI logging and file output in WezTerm too.
 See the [contribution guide](contributing.md). Keep source, tests, and
 documentation changes focused, and use Conventional Commits.
 
 ## License
 
 Code: [GNU GPL v2](../LICENSE). Documentation:
-[CC BY-NC 4.0](../LICENSE-DOCS). Preserve the attribution in the source and
-license files when redistributing.
+[CC BY-NC 4.0](../LICENSE-DOCS). Preserve existing attribution.
