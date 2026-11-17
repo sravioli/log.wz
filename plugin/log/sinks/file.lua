@@ -1,9 +1,12 @@
 ---@module "log.sinks.file"
 
+local deps = require "log.deps"
 local wezterm = require "wezterm"
 
--- selene: allow(incorrect_standard_library_use)
-local sep = package.config:sub(1, 1)
+---@return Warp.FileSystem
+local function fs()
+  return deps.warp().filesystem
+end
 
 local json_mod
 
@@ -19,49 +22,6 @@ local function get_json_module()
   end
   json_mod = mod
   return json_mod
-end
-
----Return a platform-appropriate directory for log files.
----@return string
-local function default_log_dir()
-  if sep == "\\" then
-    local dir = os.getenv "LOCALAPPDATA" or os.getenv "APPDATA"
-    if dir then
-      return dir .. "\\wezterm"
-    end
-  else
-    local xdg = os.getenv "XDG_DATA_HOME"
-    if xdg then
-      return xdg .. "/wezterm"
-    end
-    local home = os.getenv "HOME"
-    if home then
-      return home .. "/.local/share/wezterm"
-    end
-  end
-  return "."
-end
-
----Create a directory and its parents with an argv list (never a shell
----string). On Windows `mkdir` is a `cmd.exe` builtin, so paths holding cmd
----metacharacters are refused.
----@param dir string
----@return boolean ok
-local function make_dir(dir)
-  if type(wezterm.run_child_process) ~= "function" then
-    return false
-  end
-  local argv
-  if sep == "\\" then
-    if dir:find '[%%&|<>^"!%c]' then
-      return false
-    end
-    argv = { "cmd.exe", "/d", "/c", "mkdir", dir }
-  else
-    argv = { "mkdir", "-p", "--", dir }
-  end
-  local ok, success = pcall(wezterm.run_child_process, argv)
-  return ok and success == true
 end
 
 ---Normalize a path to forward-slashed lowercase for comparison.
@@ -88,13 +48,6 @@ local function is_inside_config_dir(path)
   return norm(path):sub(1, #norm_dir) == norm_dir
 end
 
----Extract the filename component from a path.
----@param path string
----@return string
-local function basename(path)
-  return path:match "([^/\\]+)$" or path
-end
-
 ---Resolve a safe log-file path.
 ---
 ---When `path` is nil a default is chosen.  When `path` falls inside
@@ -104,15 +57,14 @@ end
 ---@param path? string Requested file path.
 ---@return string path  Safe, resolved path.
 local function resolve_path(path)
-  local log_dir = default_log_dir()
+  local log_dir = fs().data_dir() or "."
 
   if not path then
-    return log_dir .. sep .. "log.wz.log"
+    return log_dir .. "/log.wz.log"
   end
 
   if is_inside_config_dir(path) then
-    local name = basename(path)
-    local safe = log_dir .. sep .. name
+    local safe = log_dir .. "/" .. fs().basename(path)
     wezterm.log_warn(
       (
         "[Log.File] '%s' is inside wezterm.config_dir — relocated to '%s' "
@@ -190,7 +142,7 @@ function FileSink:append(payload)
   if not handle and not self._dir_tried then
     self._dir_tried = true
     local dir = self.path:match "^(.+)[/\\][^/\\]*$"
-    if dir and make_dir(dir) then
+    if dir and fs().mkdir(dir) then
       handle, err = io.open(self.path, "a")
     end
   end

@@ -548,7 +548,8 @@ describe("log.sinks.file", function()
       assert.is_true(sink:append "line 1")
       assert.is_true(sink:append "line 2")
       assert.are.equal(1, #calls)
-      assert.are.same({ "mkdir", "-p", "--", dir .. "/nested" }, calls[1])
+      assert.matches("mkdir$", calls[1][1]) -- warp resolves it to an absolute path
+      assert.are.same({ "-p", "--", dir .. "/nested" }, { calls[1][2], calls[1][3], calls[1][4] })
       local f = assert(io.open(path, "r"))
       local content = f:read "*a"
       f:close()

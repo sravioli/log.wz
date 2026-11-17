@@ -24,7 +24,9 @@ Requires **WezTerm [`20230320-124340-559cb7b0`](https://wezterm.org/config/lua/w
 or newer** and Git. JSON sinks, including the default file format, also need
 a **[nightly with serde support (2024-02-08) or newer](https://github.com/wezterm/wezterm/commit/8596422abf6257ecfb57b32396c56318c8231886)**.
 Use `format = "text"` for files on stable builds.
-No other plugins or special fonts are required.
+The file sink loads [warp.wz](https://github.com/sravioli/warp.wz) the first
+time you create one; `wezterm.plugin.require` fetches it for you. No other
+plugins or special fonts are required.
 
 ### Install and run
 

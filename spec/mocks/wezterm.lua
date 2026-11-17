@@ -79,6 +79,14 @@ M.time = {
 local sep = package.config:sub(1, 1)
 M.config_dir = sep == "\\" and "C:\\wezterm_mock_config_dir" or "/wezterm_mock_config_dir"
 
+-- warp.wz is a real sibling checkout; the file sink uses its filesystem helpers.
+package.path = "../warp.wz/plugin/?.lua;../warp.wz/plugin/?/init.lua;" .. package.path
+M.target_triple = sep == "\\" and "x86_64-pc-windows-msvc" or "x86_64-unknown-linux-gnu"
+M.home_dir = os.getenv "HOME" or os.getenv "USERPROFILE"
+M.column_width = function(s)
+  return utf8.len(s) or #s
+end
+
 -- wezterm.plugin stub
 M.plugin = {
   list = function()
