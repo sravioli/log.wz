@@ -83,7 +83,14 @@ end
 ---@field threshold integer    Minimum level required for logs to be emitted.
 ---@field sinks     Log.Sink[] List of active sinks.
 local Log = {}
-Log.__index = Log
+-- A logger without its own `threshold` reads the configured one on every
+-- call, so `log:setup{ threshold }` also reaches loggers made before it.
+Log.__index = function(_, key)
+  if key == "threshold" then
+    return l.normalize(cfg.get().threshold) or l.levels.WARN
+  end
+  return Log[key]
+end
 
 ---Create new logger instance.
 ---
@@ -115,7 +122,6 @@ function Log.new(tag, enabled, sinks)
   return setmetatable({
     tag = tag or "Log",
     enabled = enabled,
-    threshold = l.normalize(c.threshold) or l.levels.WARN,
     sinks = new_sinks,
   }, Log)
 end

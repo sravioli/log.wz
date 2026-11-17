@@ -187,9 +187,10 @@ write. See the [annotated source](../plugin/log/api.lua) for full event and sink
 
 ### A message is missing
 
-The default threshold is `WARN`. Configure a lower threshold before creating
-the logger, and check both global and instance `enabled` flags. After changing
-the default sink setting, recreate the logger.
+The default threshold is `WARN`. Lower it with `log:setup { threshold = "DEBUG" }`;
+loggers follow it unless you set `logger.threshold` yourself. Check both the
+global and the instance `enabled` flags. After changing the default sink
+setting, recreate the logger.
 
 ### File output does not appear
 

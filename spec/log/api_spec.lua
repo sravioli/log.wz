@@ -79,6 +79,22 @@ describe("log.api", function()
       assert.are.equal(levels.levels.ERROR, log.threshold)
     end)
 
+    it("follows a threshold set up after the logger was made", function()
+      config.setup { threshold = "WARN", sinks = { default_enabled = false } }
+      local seen = {}
+      local log = api.new("Late", true, {
+        function(event)
+          seen[#seen + 1] = event.level_name
+        end,
+      })
+      config.setup { threshold = "DEBUG" }
+      log:debug "now visible"
+      assert.same({ "DEBUG" }, seen)
+      log.threshold = levels.levels.ERROR -- an explicit level still wins
+      log:warn "hidden"
+      assert.same({ "DEBUG" }, seen)
+    end)
+
     it("falls back to WARN when threshold is unrecognised", function()
       config.setup { threshold = "UNKNOWN" }
       local log = api.new()
