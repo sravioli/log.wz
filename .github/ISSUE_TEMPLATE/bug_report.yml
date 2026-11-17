@@ -43,7 +43,7 @@ body:
       render: lua
       placeholder: |
         log:setup { threshold = "DEBUG", sinks = { default_enabled = true } }
-        local logger = log:new("my-tag", true, { log.sinks.file() })
+        local logger = log.new("my-tag", true, { log.sinks.file() })
   - type: textarea
     id: steps
     attributes:
