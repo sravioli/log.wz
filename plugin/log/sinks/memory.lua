@@ -5,11 +5,18 @@ local DEFAULT_MAX_ENTRIES = 10000
 ---@class Log.Sinks.MemoryOpts
 ---@field max_entries? integer Maximum stored entries. Oldest are evicted when full. 0 = unlimited. Defaults to 10 000.
 
+---Events live in a ring buffer, so a full sink evicts in O(1) instead of
+---shifting every entry. `entries` is read as a fresh oldest-first list.
 ---@class Log.Sinks.MemorySink
----@field entries     Log.Event[] Stored log events.
+---@field entries     Log.Event[] Stored log events, oldest first (a copy).
 ---@field max_entries integer     Maximum stored entries (0 = unlimited).
 local MemorySink = {}
-MemorySink.__index = MemorySink
+MemorySink.__index = function(self, key)
+  if key == "entries" then
+    return self:get_entries()
+  end
+  return MemorySink[key]
+end
 
 ---Dispatch to write when used as a sink function.
 ---@param event Log.Event
@@ -23,24 +30,34 @@ end
 ---
 ---@param event Log.Event Log event to store.
 function MemorySink:write(event)
-  table.insert(self.entries, event)
-  if self.max_entries > 0 and #self.entries > self.max_entries then
-    table.remove(self.entries, 1)
+  local max = self.max_entries
+  if max > 0 and self._count == max then
+    -- Overwrite the oldest slot and move the start past it.
+    self._buf[self._first] = event
+    self._first = self._first % max + 1
+    return
   end
+  self._count = self._count + 1
+  local slot = self._count
+  if max > 0 then
+    slot = (self._first + self._count - 2) % max + 1
+  end
+  self._buf[slot] = event
 end
 
 ---Remove all stored log entries.
 function MemorySink:clear()
-  self.entries = {}
+  self._buf, self._first, self._count = {}, 1, 0
 end
 
----Return shallow copy of stored entries.
+---Return shallow copy of stored entries, oldest first.
 ---
 ---@return Log.Event[] entries Copy of stored log events.
 function MemorySink:get_entries()
-  local copy = {}
-  for i = 1, #self.entries do
-    copy[i] = self.entries[i]
+  local copy, max = {}, self.max_entries
+  for i = 1, self._count do
+    local slot = max > 0 and (self._first + i - 2) % max + 1 or i
+    copy[i] = self._buf[slot]
   end
   return copy
 end
@@ -49,7 +66,7 @@ end
 ---
 ---@return integer count Number of stored entries.
 function MemorySink:count()
-  return #self.entries
+  return self._count
 end
 
 ---Stringify all entries into human-readable lines.
@@ -59,9 +76,8 @@ end
 ---@return string formatted_log Concatenated string of all log entries.
 function MemorySink:to_string()
   local out = {}
-  for i = 1, #self.entries do
-    local e = self.entries[i]
-    table.insert(out, ("[%s] %s"):format(e.level_name, e.message))
+  for i, e in ipairs(self:get_entries()) do
+    out[i] = ("[%s] %s"):format(e.level_name, e.message)
   end
   return table.concat(out, "\n")
 end
@@ -76,9 +92,10 @@ end
 return setmetatable({}, {
   __call = function(_, opts)
     opts = opts or {}
-    return setmetatable({
-      entries = {},
+    local sink = setmetatable({
       max_entries = opts.max_entries or DEFAULT_MAX_ENTRIES,
     }, MemorySink)
+    sink:clear()
+    return sink
   end,
 })

@@ -471,9 +471,12 @@ _Returns:_
 
 [Back to top](#logwz-api-reference)
 
+Events live in a ring buffer, so a full sink evicts in O(1) instead of
+shifting every entry. `entries` is read as a fresh oldest-first list.
+
 Values:
 
-- `Log.Sinks.MemorySink.entries` (`Log.Event[]`): stored log events.
+- `Log.Sinks.MemorySink.entries` (`Log.Event[]`): stored log events, oldest first (a copy).
 - `Log.Sinks.MemorySink.max_entries` (`integer`): maximum stored entries (0 = unlimited).
 
 ### Log.Sinks.MemorySink:write
@@ -504,7 +507,7 @@ Remove all stored log entries.
 Log.Sinks.MemorySink:get_entries() -> entries: Log.Event[]
 ```
 
-Return shallow copy of stored entries.
+Return shallow copy of stored entries, oldest first.
 
 _Returns:_
 

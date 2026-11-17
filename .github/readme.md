@@ -179,9 +179,9 @@ The `os.time` fallback has second precision.
 
 ### Sink factories and operations
 
-Sink modules load on first access. If a module fails to load, Log reports the
-error and caches a no-op fallback. Empty output does not prove a successful
-write. See the [annotated source](../plugin/log/api.lua) for full event and sink types.
+Sink modules load on first access. A sink that fails to load, or an unknown
+sink name, raises an error. The memory sink keeps its events in a ring buffer,
+so a full sink drops the oldest event in constant time. See the [annotated source](../plugin/log/api.lua) for full event and sink types.
 
 ## Troubleshooting
 

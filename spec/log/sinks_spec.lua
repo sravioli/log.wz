@@ -92,6 +92,17 @@ describe("log.sinks.memory", function()
     end)
   end)
 
+  describe("ring buffer", function()
+    it("keeps the newest entries in order after wrapping many times", function()
+      local sink = require "log.sinks.memory" { max_entries = 3 }
+      for i = 1, 10 do
+        sink:write { message = tostring(i), level_name = "INFO" }
+      end
+      assert.are.equal(3, sink:count())
+      assert.are.equal("[INFO] 8\n[INFO] 9\n[INFO] 10", sink:to_string())
+    end)
+  end)
+
   describe("get_entries()", function()
     it("returns a shallow copy", function()
       local sink = memory()
@@ -807,14 +818,10 @@ describe("log.sinks (init)", function()
     assert.is_string(f.path)
   end)
 
-  it("returns fallback for unknown sink module", function()
+  it("raises for an unknown sink, so a typo is not a silent no-op", function()
     local sinks = require "log.sinks"
-    local unknown = sinks.nonexistent
-    -- Fallback returns a no-op function.
-    assert.is_function(unknown)
-    -- Calling it does not error.
-    assert.has_no.errors(function()
-      unknown {}
+    assert.has_error(function()
+      return sinks.nonexistent
     end)
   end)
 
@@ -825,80 +832,14 @@ describe("log.sinks (init)", function()
     assert.are.equal(first, second)
   end)
 
-  it("logs error when module fails to load", function()
-    wezterm_mock._reset()
-    package.loaded["log.sinks"] = nil
+  it("raises when a sink module fails to load", function()
     package.preload["log.sinks.badmod"] = function()
       error "oops"
     end
     local sinks = require "log.sinks"
-    local _ = sinks.badmod
-    local found = false
-    for _, call in ipairs(wezterm_mock._calls) do
-      if call.fn == "log_error" and tostring(call.args[1]):find "Unable to load" then
-        found = true
-      end
-    end
-    assert.is_true(found)
+    assert.has_error(function()
+      return sinks.badmod
+    end)
     package.preload["log.sinks.badmod"] = nil
-  end)
-
-  -- ── Fallback sinks when real modules fail to load ──
-  describe("fallback sinks", function()
-    local function poison_module(name)
-      package.loaded[name] = nil
-      package.preload[name] = function()
-        error "forced load failure"
-      end
-    end
-
-    local function unpoison_module(name)
-      package.preload[name] = nil
-      package.loaded[name] = nil
-    end
-
-    it("returns fallback json sink when json module fails", function()
-      poison_module "log.sinks.json"
-      local sinks = require "log.sinks"
-      local j = sinks.json
-      assert.is_table(j)
-      assert.are.equal("{}", j.encode "x")
-      assert.is_table(j.decode "{}")
-      assert.is_nil(j.write {})
-      assert.is_nil(j {})
-      unpoison_module "log.sinks.json"
-    end)
-
-    it("returns fallback file sink when file module fails", function()
-      poison_module "log.sinks.file"
-      local sinks = require "log.sinks"
-      local f = sinks.file
-      assert.is_table(f)
-      local instance = f()
-      assert.is_table(instance)
-      assert.are.equal(".", instance.path)
-      assert.are.equal("json", instance.format)
-      -- write and __call do not error.
-      instance:write {}
-      instance {}
-      unpoison_module "log.sinks.file"
-    end)
-
-    it("returns fallback memory sink when memory module fails", function()
-      poison_module "log.sinks.memory"
-      local sinks = require "log.sinks"
-      local m = sinks.memory
-      assert.is_table(m)
-      local instance = m()
-      assert.is_table(instance)
-      assert.are.equal(0, instance.max_entries)
-      instance:write {}
-      instance:clear()
-      assert.is_table(instance:get_entries())
-      assert.are.equal(0, instance:count())
-      assert.are.equal("", instance:to_string())
-      instance {}
-      unpoison_module "log.sinks.memory"
-    end)
   end)
 end)
