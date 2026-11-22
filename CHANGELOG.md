@@ -2,6 +2,35 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [2.0.0](https://github.com/sravioli/log.wz/compare/7e1422b734938cd0a64ae0aeb1d83324723ea1f2..2.0.0) - 2026-11-22
+#### Bug Fixes
+- (**api**) follow the configured threshold in loggers without their own - ([2992f1e](https://github.com/sravioli/log.wz/commit/2992f1e2c4c2a58b19465e999b1bc276bdabd11f)) - sravioli
+#### Documentation
+- (**contributing**) document the signed-commit requirement - ([b547621](https://github.com/sravioli/log.wz/commit/b547621bc8a9dd3d83e33f78dded42bde4722f28)) - sravioli
+- (**contributing**) unify guides and templates - ([7e1422b](https://github.com/sravioli/log.wz/commit/7e1422b734938cd0a64ae0aeb1d83324723ea1f2)) - sravioli
+- (**readme**) point to warp.log - ([c505f09](https://github.com/sravioli/log.wz/commit/c505f093b7cf5b5ff0c149e6e7affef11023830f)) - sravioli
+- (**readme**) unify badge style and add release badge - ([dfbbf06](https://github.com/sravioli/log.wz/commit/dfbbf0683b6112ec0f4b9a208e1edcae10594de9)) - sravioli
+- (**readme**) align checks section - ([94c14bf](https://github.com/sravioli/log.wz/commit/94c14bf7002f054c5e1d0088b415b3cb5f4f6591)) - sravioli
+- add minit.lua for reproducing bugs - ([31d4c9b](https://github.com/sravioli/log.wz/commit/31d4c9b7c3267644ee09e38fa66730bfd1376dfc)) - sravioli
+- document working-tree local checkout setup - ([a7beb19](https://github.com/sravioli/log.wz/commit/a7beb19793a9992d5bad0522b1fb8d65184e3d16)) - sravioli
+#### Continuous Integration
+- pass the release tag to the shell through env - ([134d215](https://github.com/sravioli/log.wz/commit/134d2155608bb5d865ec3d134274717bad18b76c)) - sravioli
+- release from the pushed tag - ([28867f7](https://github.com/sravioli/log.wz/commit/28867f78c080d0ee3bebb4855c89e2d92373de84)) - sravioli
+- count only the plugin's own files in coverage - ([4f77a6a](https://github.com/sravioli/log.wz/commit/4f77a6a36bce5b6df9ffaa725ef2ed5e3b21a3cf)) - sravioli
+- bump cocogitto/cocogitto-action from 3.11 to 4 in the actions group across 1 directory (#5) - ([0b517c5](https://github.com/sravioli/log.wz/commit/0b517c56e07e149de8b52979e9eb23b8aa140386)) - [@sravioli](https://github.com/sravioli)
+- adapt workflows to cocogitto-action v4 - ([cdc584d](https://github.com/sravioli/log.wz/commit/cdc584d8fd01f32dfdbd0cb2ca509d4470a58729)) - sravioli
+- build the API reference from a majority of three LuaLS runs - ([121aed4](https://github.com/sravioli/log.wz/commit/121aed44c32a93a75472e03793479ea21d239b41)) - sravioli
+- bump cocogitto/cocogitto-action - ([1a9d09a](https://github.com/sravioli/log.wz/commit/1a9d09ae7cef0c524774cdb4b1552b90c02f9330)) - dependabot[bot]
+- update the actions to the versions Dependabot proposed - ([f3e9ced](https://github.com/sravioli/log.wz/commit/f3e9ced99f12ece103a70b172834f3fe0b375484)) - sravioli
+- pin StyLua to 2.6.0 - ([8f27566](https://github.com/sravioli/log.wz/commit/8f27566993eb075c479a3c781b6303aabaa25d8b)) - sravioli
+- fix the flaky API check and the EditorConfig rate limit - ([501efc2](https://github.com/sravioli/log.wz/commit/501efc2a80cef2aaaf9fbeab63ab79c68a7fec05)) - sravioli
+#### Refactoring
+- (**file**) build the file sink on warp's filesystem helpers - ([e0f0740](https://github.com/sravioli/log.wz/commit/e0f0740364aa6345b7f1e5f18d49a79e985c2954)) - sravioli
+- ![BREAKING](https://img.shields.io/badge/BREAKING-red) (**sinks**) drop fallback stubs, ring-buffer memory sink - ([5427833](https://github.com/sravioli/log.wz/commit/5427833981925c43ec24213a4c22257818ae3661)) - sravioli
+- ![BREAKING](https://img.shields.io/badge/BREAKING-red) return warp.log from warp.wz - ([2b93ef4](https://github.com/sravioli/log.wz/commit/2b93ef44fcabb5d381107cc9553158cf199a41fa)) - sravioli
+
+- - -
+
 ## [1.0.3](https://github.com/sravioli/log.wz/compare/189ba959f0c81c9e7f285be68717b22d3301ea33..1.0.3) - 2026-11-15
 #### Bug Fixes
 - (**file**) create log dir lazily without a shell - ([ed3e065](https://github.com/sravioli/log.wz/commit/ed3e065b44eb5c7a64de902a506b79b849c3e3e4)) - sravioli
