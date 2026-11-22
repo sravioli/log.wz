@@ -1,0 +1,5 @@
+describe("log.wz", function()
+  it("returns warp.log", function()
+    assert.are.equal(require("warp.api").log, require "log.api")
+  end)
+end)

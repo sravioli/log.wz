@@ -18,9 +18,8 @@ We do not accept translations, social media posts, or outreach work.
 
 ## Overview
 
-log.wz is a logging library for [WezTerm](https://wezterm.org/) plugins and
-configuration code. Each logger has a tag and a level filter. Sinks send the
-messages to the WezTerm log, JSON, a file, or a ring buffer in memory.
+log.wz moved into [warp.wz](https://github.com/sravioli/warp.wz) as
+`warp.log`. This URL still works: it returns `warp.log`.
 
 The [README](readme.md) tells you how to use the plugin.
 
